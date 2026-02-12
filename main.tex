@@ -138,15 +138,16 @@
     
     \noindent\textbf{Keywords:} Markowitz · Risk Measures · Optimization \par
     \noindent\textbf{Classification:} 91G10 · 91G30 · 91G70
-
 \end{abstract}
 \section{Introduction}
-\section{Force of interest}
+Sometimes it is difficult to download stock data or to scrape from finance websites. So its clever to simulate own data, described in Chapter...
+This concepts and proofs are based on lecture portfolio optimization by Prof. Pichler. \citet{PichlerPortfoliooptimierung}
+\section{Preliminaries}
 To obtain the present value $PV$ from a future value $FV$ at time $t>0$ we use the well-known formula $PV = FV e^{-\delta t}$ for some $\delta\in\mathbb{R}$. Hence, the so-called force of interest reads as follows
     \begin{align*}
         \delta = \frac{1}{t}\ln\left(\frac{FV}{PV}\right).
     \end{align*}
-In the same way, we design the returns of our assets. Hence, for timestamps $\{t_0,\ldots,t_n\}$, the return per time period $[t_{i-1}, t_i]$ of the asset $j\in\{1,\ldots,J\}$ is given by
+In the same way, we design the returns of our assets. For timestamps $\{t_0,\ldots,t_n\}$, the return per time period $[t_{i-1}, t_i]$ of the asset $j\in\{1,\ldots,J\}$ is given by
 \begin{equation*}
     \xi_i^j := \frac{1}{t_i-t_{i-1}}\ln\left(\frac{S_{t_i}^j}{S_{t_{i-1}}^j}\right).
 \end{equation*}
@@ -159,7 +160,7 @@ We store these stock observations in a matrix
         \xi_n^1 & \cdots & \xi_n^J
     \end{pmatrix}
 \end{equation*}
-We introduce a probability measure $\pr(\xi = \xi_i^j)$ for a random variable $\xi\colon\Omega\to\R$ and store these probabilities in the vector for every stock $j\in\{1,\ldots,J\}$
+We introduce a probability measure $\pr(\xi = \xi_i^j)\in[0,1]$ for a random variable $\xi\colon\Omega\to\R$.\footnote{$(\Omega,\Sigma,\pr)$ probability space and $(\R,\mathcal{B})$ standard Borel space as usual} We will store these probabilities for every stock $j\in\{1,\ldots,J\}$ in the probability vector
 \begin{equation*}
     p =
     \begin{pmatrix}
@@ -176,9 +177,9 @@ We introduce a probability measure $\pr(\xi = \xi_i^j)$ for a random variable $\
         \frac{t_1-t_0}{t_n-t_0} \\
         \vdots \\
         \frac{t_n-t_{n-1}}{t_n-t_0}
-    \end{pmatrix}.
+    \end{pmatrix}
 \end{equation*}
-Then we obtain after canceling the telescoping sums the expected return for every stock and store them in a vector $r = \E\xi = p^\top\Xi$ with
+with property $\sum_{i=1}^n\pr(\xi = \xi_i^j) = \sum_{i=1}^n p_i = 1$. Then we obtain after canceling another telescoping sum the expected return for every stock and store them in a vector $r = \E\xi = p^\top\Xi \in\R^J$ with
 \begin{equation*}
     \begin{aligned}
     r_j 
@@ -190,7 +191,7 @@ Then we obtain after canceling the telescoping sums the expected return for ever
     \end{aligned}
 \end{equation*}
 \section{Simulation of Stocks}
-Let $\mu\in\R$ describe the drift and $\sigma\geq0$ represent the volatility of our stock. To simulate stocks with the computer, we use the Geometric Brownian Motion. It is the solution of the stochastic differential equation
+Let $\mu\in\R$ describe the drift and $\sigma\geq0$ represent the volatility of our stock. To simulate a single stock in numerical analysis, we use the Geometric Brownian Motion. It is the solution of the stochastic differential equation
 \begin{equation*}
     dS_t = \mu S_tdt + \sigma S_tdW_t
 \end{equation*}
@@ -198,28 +199,23 @@ where $W_t$ is a Wiener process, also known as Brownian Motion. The equation has
 \begin{equation*}
     S_t = S_0\exp\left(\left(\mu-\frac{\sigma^2}{2}\right)t+\sigma W_t\right)
 \end{equation*}
-for some start stock value $S_0\in\R_{\geq0}$ and this leads to the following algorithm.
+for some start stock value $S_0\in\R_{\geq0}$ and this leads to the following algorithm:
 \RestyleAlgo{ruled}
 \SetKwComment{Comment}{// }{}
 \begin{algorithm}
     \caption{Geometric Brownian Motion}
     \label{algo:GBM}
-    \KwData{$S_0\in\R_{\geq0}, \mu\in\R, \sigma\geq0$}
-    \KwResult{$S\in\R_{\geq0}^n$}
-    $y \gets 1$\;
-    $X \gets x$\;
-    $N \gets n$\;
-    \While{$N \neq 0$}{
-      \eIf{$N$ is even}{
-        $X \gets X \times X$\;
-        $N \gets \frac{N}{2} $ \Comment*[r]{This is a comment}
-      }{\If{$N$ is odd}{
-          $y \gets y \times X$\;
-          $N \gets N - 1$\;
-        }
-      }
+    \KwData{$s_0\in\R_{\geq0}, \mu\in\R, \sigma\geq0$}
+    $S_0 \gets s_0$\;
+    $i \gets 1$\;
+    \While{$i \leq n$}{
+        $N_i \gets \mathcal{N}(0,p_i)$ \Comment*[r]{$N_i\sim\mathcal{N}\left(\mu^\prime, \sigma^{\prime2}\right)$ normally distributed}
+        $S_i \gets S_{i-1}\exp\left(\left(\mu-\frac{\sigma^2}{2}\right)p_i + \sigma N_i\right)$\;
+        $i \gets i+1$\;
     }
+    \KwResult{$S\in\R_{\geq0}^n$}
 \end{algorithm}
+\newpage
 \section{Mathematical Models}
 \subsection{Markowitz Model}
 \begin{theorem}
@@ -286,203 +282,10 @@ for some start stock value $S_0\in\R_{\geq0}$ and this leads to the following al
     
 \end{proof}
 
-%	╭───────────────────────────────────────────────
-%	│	Quotation and Citation
-\section{Quotation and Citation}\label{sec:Quotation}
-    Most papers follow the \href{https://www.chicagomanualofstyle.org}{Chicago Manual of Style preference}.
-    \subsection{Quotations}
-    \begin{quote}
-        ``To be, or not to be, that's the question now,''    
-    \end{quote}
-    wrote Shakespeare.
-
-    Recall that German quotation marks are different:
-    \begin{quotation}
-        \glqq Adieu. tausend küsse, und dem lacci bacci tausend Ohrfeigen,\grqq{}
-    \end{quotation}
-    wrote Wolfgang Amadeus Mozart to his father Leopold.
-
-    \subsection{Citations}
-    User friendly citations provide basic name information in the text, such that your reader can avoid scrolling down and looking up the list of references at the end of the document. As shown in~\cite{Riemann1876} is \emph{not} a user friendly citation, but as shown in \citet{Riemann1876} is reader friendly. The \texttt{natbib} package and the separate bibliography file (file extension \texttt{.bib}) simplify citations significantly.
-
-    Citations ought to be precise, like \citet[Section~6.3, Eq.~(6.3.1)]{Oeksendal2003}.
-    Be polite and write names properly and correct. The following examples (and all other references in this primer, cf.\ page~\pageref{References}) involve tricky names:
-    \begin{itemize}
-        \item \citet{RoemischDupacova2003, Kankova2004}: special symbols for ${\mathrm{B{\scriptstyle{IB}} \! T\!_{\displaystyle E} \! X}}$ can be found in \href{http://www.bibtex.org/SpecialSymbols}{http://www.bibtex.org/SpecialSymbols}.%
-        \item \citet{DeLara2015, Bellini2008986, Aizpuru2008}: the second name consists of two words, with or without hyphen.
-        \item \citet{Dana2005, PflugPichlerBuch}: correctly abbreviate the given name in the list of references.
-    \end{itemize}
-    
-    In case you are not sure about abbreviations of journals in the reference section, you may check them in MathSciNet at \href{http://www.ams.org/mathscinet}{http://www.ams.org/mathscinet}.
-    
-    \begin{remark}[Nota bene]
-        BibTeX (according to Oren Patashnik's manual) wants all accented characters in a single set of braces, so only  \texttt{\textbackslash{}"\{u\}}, e.g, is valid to obtaining \"{u}.
-        In \LaTeX{}, however, it is correct to write \texttt{\textbackslash{}"\{u\}} \emph{or}  \texttt{\{\textbackslash{}"u\}}.
-    \end{remark}
-
-%	╭───────────────────────────────────────────────
-%	│	Typesetting mathematical formulae
-\section{Typesetting}\label{sec:Maths}
-    In what follows, we collect some typesetting guidelines for writing text and mathematical formulae.
-    
-    \subsection{Paragraphs and linebreaks}
-    An empty line (or the command \texttt{\textbackslash{}par}) starts a new paragraph. This is what you typically want in continuous text, and \emph{not} the line break~\texttt{\textbackslash\textbackslash{}}: a double backslash (\texttt{\textbackslash\textbackslash}) does \emph{not} start a new paragraph.
-
-    As well, it is good editing practice to start every sentence (in the editor, notably) on a new line.
-
-    \subsection{Typesetting mathematical formulae}
-    \LaTeX{} has encoded specific functions to typeset them correctly, as ``\texttt{\textbackslash{}sin}'', ``\texttt{\textbackslash{}exp}'', etc.
-    Frequent typesetting mistakes include
-    \begin{align*}
-        \text{wrong } &- \text{ correct}\\
-        log e^x&- \log e^x \\
-        sin x&- \sin x, \text{ and} \\
-        V@R &- \VaR.
-    \end{align*}
-
-    In case you need your own function or operator, define them in the preamble (the header) of the document, such as
-    \texttt{\textbackslash{}DeclareMathOperator*\{\textbackslash{}esssup\}\{ess\textbackslash{},sup\}\}}, so that
-    \[
-        \esssup_{\omega\in\Omega} X(\omega)= -\essinf_{\omega\in\Omega} \big(-X(\omega)\big).
-    \]
-    or
-    \[  \mathring S=S^\circ\coloneqq \operatorname{int}S=\overline{S^{\mathsf c}}^{\mathsf c}.\]
-    
-    \subsection{Spacing of formulae}
-    This is correct spacing before and after the formula,
-    \begin{equation}\label{eq:Euler}
-        M=E-\varepsilon\cdot \sin E,
-    \end{equation}
-    but this 
-    
-    \[\pi(x)=\sum_{\mathclap{\substack{p\le x \\ p\text{ prime}}}}1\]
-
-    is wrong spacing: remove the empty lines \emph{before and after} the formula in the source code to obtain proper spacing.
-
-\subsection{Referencing formulas}
-    \begin{itemize}
-        \item For referencing formulas as~\eqref{eq:Euler}, use ‘\texttt{\textbackslash{}eqref\{\dots\}}’ instead of ‘\texttt{(\textbackslash{}ref\{\dots\})}’.
-    
-        \item References to files containing blanks in the filepath can be accomplished as\\
-        \texttt{\hspace*{3em}\textbackslash{}includegraphics[width=1\textbackslash{}textwidth]}\\ \texttt{\hspace*{6em}\string{\textbackslash{}string"../../Alois \string& Georg/TREE\string&Prob\textbackslash{}string\string".png\string}}
-    \end{itemize}
-
-%	╭───────────────────────────────────────────────
-%	│	Specific typesetting issues
-\section{Specific typesetting issues}\label{sec:Typesetting}
-    \LaTeX{} is a high-quality typesetting system. As a general rule, \LaTeX{} is smarter than its user and for that reason it should be avoided, in general, to overrule the system's typesetting procedures. There are only few rules which need to be followed.
-
-    \paragraph{Spacing.}
-    \Cref{tab:whitespace} provides examples of different white spaces for correct typesetting.
-    \begin{table*}[ht]\centering
-        \begin{tabular}[h]{>{\centering}p{0.05\textwidth}>{\raggedright}p{0.3\textwidth}>{\raggedright}p{0.5\textwidth}}
-        \noalign{\vskip\doublerulesep}
-            \toprule
-            \LaTeX{} & remark & example\tabularnewline[\doublerulesep]
-            \noalign{\vskip\doublerulesep}
-            \midrule
-            \texttt{\textasciitilde{}} & protected (hard) space & The street is 10~km long.\\ Dr.~Who is a well-known mathematician. \\ See \cref{fig:WordvsLatex}.
-            \tabularnewline[\doublerulesep]
-            \texttt{.\textbackslash{}\textvisiblespace{}} & normal (interword) space between words or after a period that is not the end of a sentence 
-            & \dots, cf.\ \citet{Oeksendal2003}\\ This is the 1.\ sentence. \\
-            \dots $x$ ($\tilde x$, resp.)\ and so on\\ Convergence a.s.\ holds, if \dots \\ Whales, sharks, etc.\ are animals.\\
-            St.\ Banach was born in Krak\'ow. \\ Differentiate w.r.t.\ the first variable.
-            \tabularnewline[\doublerulesep]
-            \texttt{\textbackslash{}@.} & the period which \emph{follows} is sentence-final & 
-            These results are from her Ph.D\@. I’m visiting the MPI\@. 
-            The main processor is a Pentium III\@. 
-            \dots because $Z\ge0$ a.s\@.  She is the spouse of Henry~VIII\@.
-            \tabularnewline[\doublerulesep]
-            \texttt{\textbackslash{},}& thin space & $\int x\,\mathrm dx$
-            \tabularnewline[3\doublerulesep]    \texttt{\textbackslash{}mathit}, \texttt{\textbackslash{}text}&   & multi-letter variables in math mode to omit whitespace in-between letters, as in $X\preccurlyeq_\textit{FSD} Y$.
-
-    \tabularnewline[\doublerulesep]
-            \bottomrule
-        \end{tabular}
-        \caption{White space in \LaTeX{}}\label{tab:whitespace}
-    \end{table*}
-
-    \paragraph{Line breaks.}
-    Use a protected space (hardspace: ``\textasciitilde{}'' in \LaTeX{} (\texttt{Ctrl+{\color{red} \textvisiblespace{}}} in \LyX{}) to prevent \LaTeX{} from breaking the line.
-    The following (resp.)\ line break is an example (cf.\ \emph{Fig.\ \linebreak[4] \ref{fig:WordvsLatex}}) of a line break one should avoid.
-    As well, avoid “\texttt{\textbackslash{}\textbackslash{}}” to separate lines.
-
-    \paragraph{Ellipsis}
-    \LaTeX has “$\dots$” to write ellipsis. Three dots (...) is wrong.
-    
-    \paragraph{Capital Letters.}
-    Use capital letters as in \cref{sec:Numbering}, \cref{fig:WordvsLatex} or \cref{eq:Euler}, as the referenced points indicate names.
-    As detailed in the appendix, but cf.\ \cref{sec:AppendixB},  page~\pageref{sec:AppendixB}.
-
-
-
-    \paragraph{Hyphen.}
-    Use a hyphen to break a line, but a dash to \dots: cf.\ \cref{tab:Hyphen}.
-    
-
-
-
-    \begin{table*}[ht]\centering
-        \begin{tabular}[h]{>{\raggedright}p{0.15\textwidth}>{\centering}m{0.1\textwidth}>{\raggedright}p{0.21\textwidth}>{\raggedright}p{0.4\textwidth}}
-        \noalign{\vskip\doublerulesep}
-            \toprule
-            name & in \LaTeX & remark & example\tabularnewline[\doublerulesep]
-            \noalign{\vskip\doublerulesep}
-            \midrule
-            hyphen: - & \texttt{-} & word and line breaks, names & Pierre-Simon Laplace, Gösta~Mittag-Leffler, well-known, real-valued\tabularnewline[\doublerulesep]
-            \noalign{\vskip\doublerulesep}
-            protected hyphen & \texttt{\textbackslash{}nobreakdash-} &  &e\nobreakdash-mail, X\nobreakdash-ray, $\sigma$\nobreakdash-algebra, $n$\nobreakdash-dim\-ensional, $\mathbb R$\nobreakdash-valued \tabularnewline[\doublerulesep]
-            \noalign{\vskip\doublerulesep}
-            enable hyphenation & \texttt{\textbackslash{}-} &  & part\-time, deter\-mined
-            \tabularnewline[\doublerulesep]
-            \noalign{\vskip\doublerulesep}
-            en-dash: -- & \texttt{-\,-} & the length of an en-dash is the length of the letter ``n'' & pages 7--12, 1685--1712, from A--Z, Fenchel--Young inequality\tabularnewline[\doublerulesep]
-            \noalign{\vskip\doublerulesep}
-            em-dash: --- & \texttt{-\,-\,-} &  & for some---and thus any---words. Okay is also for some -- and thus any 
-            -- words\dots \tabularnewline[\doublerulesep]
-            minus sign:~$-$ & $-$ & is \emph{not} a hyphen and \emph{not} a dash & $-2\,\%$, the difference $3-7=-4$\tabularnewline[\doublerulesep]
-            \bottomrule
-        \end{tabular}
-        \caption{Hyphen versus dashes in \LaTeX{}}\label{tab:Hyphen}
-    \end{table*}
-    Note particularly that page listings in  bibliographies require an en-dash, as \citet[pp.\ 10--20]{Oeksendal2003}.
-
-    \paragraph{Footnotes and punctuation.}
-    The footnote is \emph{after} the comma,%
-        \footnote{Footnote after comma} and, at the end of a sentence, \emph{after} the full stop.\footnote{Footnote at the end of a sentence}
-
-    \paragraph{Escape.}
-    Escape capital letters as \texttt{p\{H\}} or \texttt{\{G\}aussian} in the bibfile.
-
-    Escape the comma in German texts, as \texttt{\textbackslash{}pi=3\{,\}14\textbackslash{}ldots} to obtain $\pi = 3{,}14\ldots$ instead of $\pi=3,14$.
-
-    \paragraph{Accent.}
-    Here are some examples:
-    \begin{enumerate}[nolistsep, noitemsep]
-        \item She's a teacher and it's her life. It's a nice day outside and the cat is dirty. Its fur is matted.
-        \item Possessive case:
-        \begin{enumerate}[nolistsep, noitemsep]
-            \item Singular: the topologist's comb is $\sin\nicefrac{1}{x}$; Mandy's brother plays football; Ilinois' capital is Springfield; Tux is Linux' logo; Ren\'{e} Descartes' philosophy; Wets' famous book \citet{WetsRockafellar97}.
-            \item Plural: the girls' room is very nice; Peter and John's mother is a teacher; Susan's and Charls' bags are black.
-        \end{enumerate}
-        \item Hawaii is spelled with two i's; she used six and's in one sentence.
-    \end{enumerate}
-
 
 
 \bibliographystyle{abbrvnat}
 \label{References}
-\bibliography{LiteraturAlois}
+\bibliography{Literatur}
 
-
-\appendix
-
-\section{Appendix}
-    The appendix comes after references.
-
-\section{\label{sec:AppendixB}Appendix}
-    Here could be some further details.
-
-
-\vfill\hfill\scriptsize\jobname.tex, \today
 \end{document}
