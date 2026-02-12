@@ -1,0 +1,488 @@
+% Link to this project: https://www.overleaf.com/read/hdpkgxgjkbgw
+
+%% TeXstudio and TeXShop accept magic comments
+% !TeX encoding = utf8
+% !TeX spellcheck = en_GB
+%% !BIB program = biber
+
+\RequirePackage[l2tabu, orthodox]{nag} % at beginning to track errors
+\documentclass[a4paper, english, 11pt, onecolumn, oneside, final]{article}
+
+\usepackage[T1]{fontenc}        % Use 8-bit encoding that has 256 glyphs, for output
+\usepackage[utf8]{inputenc}     % to input ä, ß, ø, æ, å, „“, “” etc. (incl. bib)
+\usepackage[verbose, a4paper, hcentering]{geometry}	% customize page layout, total={418.3pt, 591.5pt}, height=.9\paperheight
+
+\geometry{a4paper}
+%\usepackage{color}	            % enables colors
+\usepackage[english]{babel}     % English (as References, e.g.)
+\usepackage{amsthm, mathtools, amssymb, nicefrac} % mathtools loads amsmath
+\usepackage{algorithm2e}        % enables algorithms
+%\mathtoolsset{showonlyrefs}
+\numberwithin{equation}{section}   % numbering equations
+
+%   ╭════════════════════════════════════
+%	│	Developers tools
+\usepackage[notcite,notref, draft]{showkeys}	%  display labels and bookmarks
+\setlength {\marginparwidth }{2cm}  % just avoid a package warning
+\usepackage[textsize= tiny, obeyFinal]{todonotes}  %  enable \todo{...}
+
+
+%	╭───────────────────────────────────────────────
+%	│	User preferential fonts
+%\PassOptionsToPackage{full}{textcomp}
+\usepackage{newtxtext, newtxmath}%	replaces Springer like postscript (PS) fonts (Times)
+%\usepackage{lmodern}           % improved pdf fonts
+\usepackage{dsfont}             % für \one und Erwartungswert, doublestroke
+\usepackage{eurosym}
+\usepackage{microtype}          % after fonts, for typographical perfection
+
+%	╭───────────────────────────────────────────────
+%	│	tables and figures
+\usepackage{wrapfig}    % enables figures floating in the text
+\usepackage{caption, subcaption} % replaces deprecated subfig
+%\usepackage{graphicx}  % tikz loads this package as well
+%\setkeys{Gin}{draft}   % draft= false
+\usepackage{array}      % extends array and tabular environments
+\usepackage{booktabs}   % more beautiful tables
+\usepackage{tikz}       % nice tool for professional figures
+
+%	╭───────────────────────────────────────────────
+%	│	references and enumerations
+\usepackage{siunitx}    % detect-all; [locale=DE] for German commas, etc
+\DeclareSIUnit{\sieuro}{\mbox{\euro}}   % provide € symbol in formulas
+
+
+\usepackage[inline, shortlabels]{enumitem}           % customized list environments, as roman
+\setlist[enumerate,1]{label=(\roman*)}  % 1st layer (i)
+\usepackage[numbers]{natbib}	% References: round, numbers
+\usepackage[bookmarks=true, 
+    pdfpagemode= UseNone, 
+    backref= page, % include back-reference in references
+    pdftitle={Scientific writing}, 
+    pdfauthor={Alois Pichler}, 
+    colorlinks=true, citecolor=ForestGreen, urlcolor=darkgray, linkcolor=ForestGreen, 
+    pdfstartview= FitH]{hyperref} % load as last package
+\usepackage{doi}                % provides proper doi-links in references: load after hyperref
+\definecolor{ForestGreen}{HTML}{228B22} %005f50
+
+\usepackage[capitalise]{cleveref}   % lazy referencing
+\usepackage[all,defaultlines=2]{nowidow} % Hurenkinder, Schusterjungen
+
+%	╭───────────────────────────────────────────────
+%	│	User specified commands
+\definecolor{TUC}{RGB}{0, 95, 80}%\normalcolor
+\definecolor{Alois}{RGB}{161, 11, 112}
+%%   response letter
+\newenvironment{response}[1][blue]{\par\color{#1}\vspace{0.4em}\itshape\textbf{Response: }}{\par}			% response
+%%   revision
+\newcommand{\rev}[2][blue]{{\color{#1}#2}}       % command
+\newenvironment{revise}[1][blue]{\color{#1}}{}   % environment
+
+%%   my commands
+
+\DeclareMathOperator{\var}{\mathrm{var}}    % variance
+\DeclareMathOperator{\cov}{\mathrm{cov}}	% covariance
+\DeclareMathOperator{\pr}{\mathrm{Pr}}     % Probability
+\DeclareMathOperator{\E}{\mathrm{E}}	    % Expectation
+\DeclareMathOperator*{\essinf}{ess\,inf}    % essential supremum
+\DeclareMathOperator*{\esssup}{ess\,sup}    %
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator{\VaR}{\mathrm{VaR}}	% Value-at-Risk
+\DeclareMathOperator{\AVaR}{\mathrm{AVaR}}	% Average Value-at-Risk
+
+\newcommand{\R}{\mathbb{R}}                 % real numbers
+\newcommand{\one}{\mathds 1}
+\newcommand{\precision}{\Sigma^{-1}}
+\newcommand{\A}{r^\top\Sigma^{-1} r}
+\newcommand{\B}{r^\top\Sigma^{-1}\one}
+\newcommand{\C}{\one^\top\Sigma^{-1}\one}
+\newcommand{\D}{(\A)(\C)-(\B)^2}
+
+%%%%%%%%%%%%%%%%%%%%%%%%% the "\LyX" command.
+\providecommand{\LyX}{\texorpdfstring{L\kern-.1667em\lower.25em\hbox{Y}\kern-.125emX\@}{LyX}}
+
+
+%	╭───────────────────────────────────────────────
+%	│	math environments for Theorems, Definitions, Remarks etc.
+\theoremstyle{plain}
+	\newtheorem{theorem}             {Theorem}[section]
+	\newtheorem{corollary}  [theorem]{Corollary}
+	\newtheorem{lemma}      [theorem]{Lemma}
+	\newtheorem{proposition}[theorem]{Proposition}
+\theoremstyle{definition}
+	\newtheorem{definition} [theorem]{Definition}
+\theoremstyle{remark}
+	\newtheorem{remark}     [theorem]{Remark}
+
+%	╭───────────────────────────────────────────────
+%   │     the main document
+\title{
+    Sensitivity of Optimal Solutions to the Markowitz Portfolio Optimization Problem under certain Risk Measures
+}
+
+\author{
+    Julius Rode%
+        \thanks{Chemnitz, University of Technology. Contact: \href{mailto:julius.rode@s2018.tu-chemnitz.de}{julius.rode@s2018.tu-chemnitz.de}}
+}
+
+%  █▀▙ █▀█ █▀▀ █░█ ▙▃▟ █▀▀ █▖█ ▀█▀
+%  █▄▛ █▄█ █▄▄ █▄█ █▔█ ██▄ █▝█ ░█░
+\begin{document}
+\maketitle
+
+\begin{abstract}
+    This primer provides some basic and elementary hints to deliver a final thesis or an article.
+    The primer itself is written in \LaTeX{} via \href{www.overleaf.com}{overleaf} so that source code can simply be copy/\,pasted and reused; the source code is available here: \href{https://www.overleaf.com/read/hdpkgxgjkbgw}{https://www.overleaf.com/read/hdpkgxgjkbgw}.
+
+    As for the abstract itself, as a general rule: the abstract should not contain more than 200 words. \medskip
+    
+    \noindent\textbf{Keywords:} Markowitz · Risk Measures · Optimization \par
+    \noindent\textbf{Classification:} 91G10 · 91G30 · 91G70
+
+\end{abstract}
+\section{Introduction}
+\section{Force of interest}
+To obtain the present value $PV$ from a future value $FV$ at time $t>0$ we use the well-known formula $PV = FV e^{-\delta t}$ for some $\delta\in\mathbb{R}$. Hence, the so-called force of interest reads as follows
+    \begin{align*}
+        \delta = \frac{1}{t}\ln\left(\frac{FV}{PV}\right).
+    \end{align*}
+In the same way, we design the returns of our assets. Hence, for timestamps $\{t_0,\ldots,t_n\}$, the return per time period $[t_{i-1}, t_i]$ of the asset $j\in\{1,\ldots,J\}$ is given by
+\begin{equation*}
+    \xi_i^j := \frac{1}{t_i-t_{i-1}}\ln\left(\frac{S_{t_i}^j}{S_{t_{i-1}}^j}\right).
+\end{equation*}
+We store these stock observations in a matrix
+\begin{equation*}
+    \Xi =
+    \begin{pmatrix}
+        \xi_0^1 & \cdots & \xi_0^J \\
+        \vdots  & \ddots & \vdots  \\
+        \xi_n^1 & \cdots & \xi_n^J
+    \end{pmatrix}
+\end{equation*}
+We introduce a probability measure $\pr(\xi = \xi_i^j)$ for a random variable $\xi\colon\Omega\to\R$ and store these probabilities in the vector for every stock $j\in\{1,\ldots,J\}$
+\begin{equation*}
+    p =
+    \begin{pmatrix}
+        p_1 \\
+        \vdots \\
+        p_n
+    \end{pmatrix} =
+    \begin{pmatrix}
+        \pr(\xi = \xi_1^j) \\
+        \vdots \\
+        \pr(\xi = \xi_n^j)
+    \end{pmatrix} =
+    \begin{pmatrix}
+        \frac{t_1-t_0}{t_n-t_0} \\
+        \vdots \\
+        \frac{t_n-t_{n-1}}{t_n-t_0}
+    \end{pmatrix}.
+\end{equation*}
+Then we obtain after canceling the telescoping sums the expected return for every stock and store them in a vector $r = \E\xi = p^\top\Xi$ with
+\begin{equation*}
+    \begin{aligned}
+    r_j 
+    &= \E\xi^j 
+    = \sum_{i=1}^n p_i\xi_i^j
+    = \sum_{i=1}^n \frac{t_i-t_{i-1}}{t_n-t_0}\frac{1}{t_i-t_{i-1}}\ln\left(\frac{S_{t_i}^j}{S_{t_{i-1}}^j}\right)
+    = \frac{1}{t_n-t_0}\sum_{i=1}^n\left(\ln(S_{t_i}^j)-\ln(S_{t_{i-1}}^j)\right) \\
+    &= \frac{1}{t_n-t_0}\ln\left(\frac{S_{t_n}^j}{S_{t_0}^j}\right).
+    \end{aligned}
+\end{equation*}
+\section{Simulation of Stocks}
+Let $\mu\in\R$ describe the drift and $\sigma\geq0$ represent the volatility of our stock. To simulate stocks with the computer, we use the Geometric Brownian Motion. It is the solution of the stochastic differential equation
+\begin{equation*}
+    dS_t = \mu S_tdt + \sigma S_tdW_t
+\end{equation*}
+where $W_t$ is a Wiener process, also known as Brownian Motion. The equation has the solution
+\begin{equation*}
+    S_t = S_0\exp\left(\left(\mu-\frac{\sigma^2}{2}\right)t+\sigma W_t\right)
+\end{equation*}
+for some start stock value $S_0\in\R_{\geq0}$ and this leads to the following algorithm.
+\RestyleAlgo{ruled}
+\SetKwComment{Comment}{// }{}
+\begin{algorithm}
+    \caption{Geometric Brownian Motion}
+    \label{algo:GBM}
+    \KwData{$S_0\in\R_{\geq0}, \mu\in\R, \sigma\geq0$}
+    \KwResult{$S\in\R_{\geq0}^n$}
+    $y \gets 1$\;
+    $X \gets x$\;
+    $N \gets n$\;
+    \While{$N \neq 0$}{
+      \eIf{$N$ is even}{
+        $X \gets X \times X$\;
+        $N \gets \frac{N}{2} $ \Comment*[r]{This is a comment}
+      }{\If{$N$ is odd}{
+          $y \gets y \times X$\;
+          $N \gets N - 1$\;
+        }
+      }
+    }
+\end{algorithm}
+\section{Mathematical Models}
+\subsection{Markowitz Model}
+\begin{theorem}
+    Let $r = \E\xi \in\R^J$ be the expected return of the portfolio and $\mu\geq0$ be a lower bound of the expected return $\E x^\top\xi\in\R$ to an allocation $x\in\R^J$. Then the optimization problem
+    \begin{equation*}
+        \begin{aligned}
+            & \underset{x\in\R^J}{\mathrm{minimize}} & & f(x) = x^\top\Sigma x \\
+            & \mathrm{subject\,to} & & x^\top r \geq \mu \\
+            & & & x^\top\one \leq 1
+        \end{aligned}
+    \end{equation*}
+    has an explicit solution $x^*\colon\R_{\geq 0}\to\R^J$ defined by
+    \begin{equation}
+    \label{eq:markowitz-solution}
+        \begin{aligned}
+            x^*(\mu) = \lambda_1^*(\mu)\precision r + \lambda_2^*(\mu)\precision\one
+        \end{aligned}
+    \end{equation}
+    with minimal shadow prices at
+    \begin{equation*}
+        \begin{aligned}
+            & \lambda_1^*(\mu) = \frac{\mu(\one^\top\precision\one) - (r^\top\precision\one)}{(r^\top\precision r)(\one^\top\precision\one) - (r^\top\precision\one)^2}\\
+            & \lambda_2^*(\mu) = \frac{(r^\top\precision r) - \mu(r^\top\precision\one)}{(r^\top\precision r)(\one^\top\precision\one) - (r^\top\precision\one)^2}.
+        \end{aligned}
+    \end{equation*}
+\end{theorem}
+\begin{proof}
+    
+\end{proof}
+\begin{corollary}
+    The solution (\ref{eq:markowitz-solution}) is an affine combination.
+\end{corollary}
+\begin{proof}
+    
+\end{proof}
+\subsection{Utility Maximization}
+\begin{theorem}
+    Let $r = \E\xi \in\R^J$ be the expected return of the portfolio and $\kappa>0$ be a measure of risk aversion. Then the optimization problem
+    \begin{equation*}
+        \begin{aligned}
+            & \underset{x\in\R^J}{\mathrm{minimize}} & & g(x) = x^\top r - \frac{\kappa}{2}x^\top\Sigma x \\
+            & \mathrm{subject\,to} & & x^\top\one \leq 1
+        \end{aligned}
+    \end{equation*}
+    has an explicit solution $x^*\colon\R_{>0}\to\R^J$ defined by
+    \begin{equation}
+    \label{eq:utility-maximization}
+        \begin{aligned}
+            x^*(\kappa) = \frac{1}{\kappa}\precision\left(r+\frac{\kappa-r^\top\precision\one}{\one^\top\precision\one}\one\right).
+        \end{aligned}
+    \end{equation}
+\end{theorem}
+\begin{proof}
+    
+\end{proof}
+\begin{corollary}
+    The following statements hold true.
+    \begin{enumerate}
+        \item Solutions (\ref{eq:markowitz-solution}) and (\ref{eq:utility-maximization}) coincide for $\kappa = \frac{\D}{\mu(\C) - (\B)}$ and
+        \item Solution (\ref{eq:utility-maximization}) converges to a minimal variance portfolio for $\kappa\to\infty$.
+    \end{enumerate}
+\end{corollary}
+\begin{proof}
+    
+\end{proof}
+
+%	╭───────────────────────────────────────────────
+%	│	Quotation and Citation
+\section{Quotation and Citation}\label{sec:Quotation}
+    Most papers follow the \href{https://www.chicagomanualofstyle.org}{Chicago Manual of Style preference}.
+    \subsection{Quotations}
+    \begin{quote}
+        ``To be, or not to be, that's the question now,''    
+    \end{quote}
+    wrote Shakespeare.
+
+    Recall that German quotation marks are different:
+    \begin{quotation}
+        \glqq Adieu. tausend küsse, und dem lacci bacci tausend Ohrfeigen,\grqq{}
+    \end{quotation}
+    wrote Wolfgang Amadeus Mozart to his father Leopold.
+
+    \subsection{Citations}
+    User friendly citations provide basic name information in the text, such that your reader can avoid scrolling down and looking up the list of references at the end of the document. As shown in~\cite{Riemann1876} is \emph{not} a user friendly citation, but as shown in \citet{Riemann1876} is reader friendly. The \texttt{natbib} package and the separate bibliography file (file extension \texttt{.bib}) simplify citations significantly.
+
+    Citations ought to be precise, like \citet[Section~6.3, Eq.~(6.3.1)]{Oeksendal2003}.
+    Be polite and write names properly and correct. The following examples (and all other references in this primer, cf.\ page~\pageref{References}) involve tricky names:
+    \begin{itemize}
+        \item \citet{RoemischDupacova2003, Kankova2004}: special symbols for ${\mathrm{B{\scriptstyle{IB}} \! T\!_{\displaystyle E} \! X}}$ can be found in \href{http://www.bibtex.org/SpecialSymbols}{http://www.bibtex.org/SpecialSymbols}.%
+        \item \citet{DeLara2015, Bellini2008986, Aizpuru2008}: the second name consists of two words, with or without hyphen.
+        \item \citet{Dana2005, PflugPichlerBuch}: correctly abbreviate the given name in the list of references.
+    \end{itemize}
+    
+    In case you are not sure about abbreviations of journals in the reference section, you may check them in MathSciNet at \href{http://www.ams.org/mathscinet}{http://www.ams.org/mathscinet}.
+    
+    \begin{remark}[Nota bene]
+        BibTeX (according to Oren Patashnik's manual) wants all accented characters in a single set of braces, so only  \texttt{\textbackslash{}"\{u\}}, e.g, is valid to obtaining \"{u}.
+        In \LaTeX{}, however, it is correct to write \texttt{\textbackslash{}"\{u\}} \emph{or}  \texttt{\{\textbackslash{}"u\}}.
+    \end{remark}
+
+%	╭───────────────────────────────────────────────
+%	│	Typesetting mathematical formulae
+\section{Typesetting}\label{sec:Maths}
+    In what follows, we collect some typesetting guidelines for writing text and mathematical formulae.
+    
+    \subsection{Paragraphs and linebreaks}
+    An empty line (or the command \texttt{\textbackslash{}par}) starts a new paragraph. This is what you typically want in continuous text, and \emph{not} the line break~\texttt{\textbackslash\textbackslash{}}: a double backslash (\texttt{\textbackslash\textbackslash}) does \emph{not} start a new paragraph.
+
+    As well, it is good editing practice to start every sentence (in the editor, notably) on a new line.
+
+    \subsection{Typesetting mathematical formulae}
+    \LaTeX{} has encoded specific functions to typeset them correctly, as ``\texttt{\textbackslash{}sin}'', ``\texttt{\textbackslash{}exp}'', etc.
+    Frequent typesetting mistakes include
+    \begin{align*}
+        \text{wrong } &- \text{ correct}\\
+        log e^x&- \log e^x \\
+        sin x&- \sin x, \text{ and} \\
+        V@R &- \VaR.
+    \end{align*}
+
+    In case you need your own function or operator, define them in the preamble (the header) of the document, such as
+    \texttt{\textbackslash{}DeclareMathOperator*\{\textbackslash{}esssup\}\{ess\textbackslash{},sup\}\}}, so that
+    \[
+        \esssup_{\omega\in\Omega} X(\omega)= -\essinf_{\omega\in\Omega} \big(-X(\omega)\big).
+    \]
+    or
+    \[  \mathring S=S^\circ\coloneqq \operatorname{int}S=\overline{S^{\mathsf c}}^{\mathsf c}.\]
+    
+    \subsection{Spacing of formulae}
+    This is correct spacing before and after the formula,
+    \begin{equation}\label{eq:Euler}
+        M=E-\varepsilon\cdot \sin E,
+    \end{equation}
+    but this 
+    
+    \[\pi(x)=\sum_{\mathclap{\substack{p\le x \\ p\text{ prime}}}}1\]
+
+    is wrong spacing: remove the empty lines \emph{before and after} the formula in the source code to obtain proper spacing.
+
+\subsection{Referencing formulas}
+    \begin{itemize}
+        \item For referencing formulas as~\eqref{eq:Euler}, use ‘\texttt{\textbackslash{}eqref\{\dots\}}’ instead of ‘\texttt{(\textbackslash{}ref\{\dots\})}’.
+    
+        \item References to files containing blanks in the filepath can be accomplished as\\
+        \texttt{\hspace*{3em}\textbackslash{}includegraphics[width=1\textbackslash{}textwidth]}\\ \texttt{\hspace*{6em}\string{\textbackslash{}string"../../Alois \string& Georg/TREE\string&Prob\textbackslash{}string\string".png\string}}
+    \end{itemize}
+
+%	╭───────────────────────────────────────────────
+%	│	Specific typesetting issues
+\section{Specific typesetting issues}\label{sec:Typesetting}
+    \LaTeX{} is a high-quality typesetting system. As a general rule, \LaTeX{} is smarter than its user and for that reason it should be avoided, in general, to overrule the system's typesetting procedures. There are only few rules which need to be followed.
+
+    \paragraph{Spacing.}
+    \Cref{tab:whitespace} provides examples of different white spaces for correct typesetting.
+    \begin{table*}[ht]\centering
+        \begin{tabular}[h]{>{\centering}p{0.05\textwidth}>{\raggedright}p{0.3\textwidth}>{\raggedright}p{0.5\textwidth}}
+        \noalign{\vskip\doublerulesep}
+            \toprule
+            \LaTeX{} & remark & example\tabularnewline[\doublerulesep]
+            \noalign{\vskip\doublerulesep}
+            \midrule
+            \texttt{\textasciitilde{}} & protected (hard) space & The street is 10~km long.\\ Dr.~Who is a well-known mathematician. \\ See \cref{fig:WordvsLatex}.
+            \tabularnewline[\doublerulesep]
+            \texttt{.\textbackslash{}\textvisiblespace{}} & normal (interword) space between words or after a period that is not the end of a sentence 
+            & \dots, cf.\ \citet{Oeksendal2003}\\ This is the 1.\ sentence. \\
+            \dots $x$ ($\tilde x$, resp.)\ and so on\\ Convergence a.s.\ holds, if \dots \\ Whales, sharks, etc.\ are animals.\\
+            St.\ Banach was born in Krak\'ow. \\ Differentiate w.r.t.\ the first variable.
+            \tabularnewline[\doublerulesep]
+            \texttt{\textbackslash{}@.} & the period which \emph{follows} is sentence-final & 
+            These results are from her Ph.D\@. I’m visiting the MPI\@. 
+            The main processor is a Pentium III\@. 
+            \dots because $Z\ge0$ a.s\@.  She is the spouse of Henry~VIII\@.
+            \tabularnewline[\doublerulesep]
+            \texttt{\textbackslash{},}& thin space & $\int x\,\mathrm dx$
+            \tabularnewline[3\doublerulesep]    \texttt{\textbackslash{}mathit}, \texttt{\textbackslash{}text}&   & multi-letter variables in math mode to omit whitespace in-between letters, as in $X\preccurlyeq_\textit{FSD} Y$.
+
+    \tabularnewline[\doublerulesep]
+            \bottomrule
+        \end{tabular}
+        \caption{White space in \LaTeX{}}\label{tab:whitespace}
+    \end{table*}
+
+    \paragraph{Line breaks.}
+    Use a protected space (hardspace: ``\textasciitilde{}'' in \LaTeX{} (\texttt{Ctrl+{\color{red} \textvisiblespace{}}} in \LyX{}) to prevent \LaTeX{} from breaking the line.
+    The following (resp.)\ line break is an example (cf.\ \emph{Fig.\ \linebreak[4] \ref{fig:WordvsLatex}}) of a line break one should avoid.
+    As well, avoid “\texttt{\textbackslash{}\textbackslash{}}” to separate lines.
+
+    \paragraph{Ellipsis}
+    \LaTeX has “$\dots$” to write ellipsis. Three dots (...) is wrong.
+    
+    \paragraph{Capital Letters.}
+    Use capital letters as in \cref{sec:Numbering}, \cref{fig:WordvsLatex} or \cref{eq:Euler}, as the referenced points indicate names.
+    As detailed in the appendix, but cf.\ \cref{sec:AppendixB},  page~\pageref{sec:AppendixB}.
+
+
+
+    \paragraph{Hyphen.}
+    Use a hyphen to break a line, but a dash to \dots: cf.\ \cref{tab:Hyphen}.
+    
+
+
+
+    \begin{table*}[ht]\centering
+        \begin{tabular}[h]{>{\raggedright}p{0.15\textwidth}>{\centering}m{0.1\textwidth}>{\raggedright}p{0.21\textwidth}>{\raggedright}p{0.4\textwidth}}
+        \noalign{\vskip\doublerulesep}
+            \toprule
+            name & in \LaTeX & remark & example\tabularnewline[\doublerulesep]
+            \noalign{\vskip\doublerulesep}
+            \midrule
+            hyphen: - & \texttt{-} & word and line breaks, names & Pierre-Simon Laplace, Gösta~Mittag-Leffler, well-known, real-valued\tabularnewline[\doublerulesep]
+            \noalign{\vskip\doublerulesep}
+            protected hyphen & \texttt{\textbackslash{}nobreakdash-} &  &e\nobreakdash-mail, X\nobreakdash-ray, $\sigma$\nobreakdash-algebra, $n$\nobreakdash-dim\-ensional, $\mathbb R$\nobreakdash-valued \tabularnewline[\doublerulesep]
+            \noalign{\vskip\doublerulesep}
+            enable hyphenation & \texttt{\textbackslash{}-} &  & part\-time, deter\-mined
+            \tabularnewline[\doublerulesep]
+            \noalign{\vskip\doublerulesep}
+            en-dash: -- & \texttt{-\,-} & the length of an en-dash is the length of the letter ``n'' & pages 7--12, 1685--1712, from A--Z, Fenchel--Young inequality\tabularnewline[\doublerulesep]
+            \noalign{\vskip\doublerulesep}
+            em-dash: --- & \texttt{-\,-\,-} &  & for some---and thus any---words. Okay is also for some -- and thus any 
+            -- words\dots \tabularnewline[\doublerulesep]
+            minus sign:~$-$ & $-$ & is \emph{not} a hyphen and \emph{not} a dash & $-2\,\%$, the difference $3-7=-4$\tabularnewline[\doublerulesep]
+            \bottomrule
+        \end{tabular}
+        \caption{Hyphen versus dashes in \LaTeX{}}\label{tab:Hyphen}
+    \end{table*}
+    Note particularly that page listings in  bibliographies require an en-dash, as \citet[pp.\ 10--20]{Oeksendal2003}.
+
+    \paragraph{Footnotes and punctuation.}
+    The footnote is \emph{after} the comma,%
+        \footnote{Footnote after comma} and, at the end of a sentence, \emph{after} the full stop.\footnote{Footnote at the end of a sentence}
+
+    \paragraph{Escape.}
+    Escape capital letters as \texttt{p\{H\}} or \texttt{\{G\}aussian} in the bibfile.
+
+    Escape the comma in German texts, as \texttt{\textbackslash{}pi=3\{,\}14\textbackslash{}ldots} to obtain $\pi = 3{,}14\ldots$ instead of $\pi=3,14$.
+
+    \paragraph{Accent.}
+    Here are some examples:
+    \begin{enumerate}[nolistsep, noitemsep]
+        \item She's a teacher and it's her life. It's a nice day outside and the cat is dirty. Its fur is matted.
+        \item Possessive case:
+        \begin{enumerate}[nolistsep, noitemsep]
+            \item Singular: the topologist's comb is $\sin\nicefrac{1}{x}$; Mandy's brother plays football; Ilinois' capital is Springfield; Tux is Linux' logo; Ren\'{e} Descartes' philosophy; Wets' famous book \citet{WetsRockafellar97}.
+            \item Plural: the girls' room is very nice; Peter and John's mother is a teacher; Susan's and Charls' bags are black.
+        \end{enumerate}
+        \item Hawaii is spelled with two i's; she used six and's in one sentence.
+    \end{enumerate}
+
+
+
+\bibliographystyle{abbrvnat}
+\label{References}
+\bibliography{LiteraturAlois}
+
+
+\appendix
+
+\section{Appendix}
+    The appendix comes after references.
+
+\section{\label{sec:AppendixB}Appendix}
+    Here could be some further details.
+
+
+\vfill\hfill\scriptsize\jobname.tex, \today
+\end{document}
