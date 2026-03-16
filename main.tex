@@ -45,6 +45,7 @@
 \usepackage{array}      % extends array and tabular environments
 \usepackage{booktabs}   % more beautiful tables
 \usepackage{tikz}       % nice tool for professional figures
+\usepackage{svg}
 
 %	╭───────────────────────────────────────────────
 %	│	references and enumerations
@@ -131,23 +132,53 @@
 \maketitle
 
 \begin{abstract}
-    This primer provides some basic and elementary hints to deliver a final thesis or an article.
-    The primer itself is written in \LaTeX{} via \href{www.overleaf.com}{overleaf} so that source code can simply be copy/\,pasted and reused; the source code is available here: \href{https://www.overleaf.com/read/hdpkgxgjkbgw}{https://www.overleaf.com/read/hdpkgxgjkbgw}.
+"Don't put all your eggs in one basket." is a fundamental investment strategy. But how many eggs should we specifically put in our different baskets? The Markowitz\footnote{Harry Max Markowitz (1927-2023) was an American economist and Nobel Memorial Prize laureate in Economic Sciences in 1990}model, invented in 1952, provides a mathematical approach to this question. In addition, we introduce two more Markowitz-like models equipped with different risk measures. So that an investor may choose a model satisfying his risk aversion or risk preference. Our goal is to elaborate on their solutions, give a numerical approach, and determine the sensitivity of the respective model. Like with highly sensitive weather models, small changes in temperature, air pressure, etc. cause different weather outcomes and a rainy vacation. Which means a model's sensitivity measures how the solution of the model reacts to small changes in the input parameters. We apply this concept of sensitivity to the following three finance models and investigate their behaviors under small changes, e.g. minimum return, stock prices, or risk aversion. The project can be retraced on GitHub and is available here: \href{https://github.com/jurod00/Markowitz}{https://github.com/jurod00/Markowitz}.\medskip
 
-    As for the abstract itself, as a general rule: the abstract should not contain more than 200 words. \medskip
-    
-    \noindent\textbf{Keywords:} Markowitz · Risk Measures · Optimization \par
-    \noindent\textbf{Classification:} 91G10 · 91G30 · 91G70
+\noindent\textbf{Keywords:} Markowitz · Risk Measures · Optimization\par
+\noindent\textbf{Classification:} 91G10 · 91G30 · 91G70
 \end{abstract}
 \section{Introduction}
-Sometimes it is difficult to download stock data or to scrape from finance websites. So its clever to simulate own data, described in Chapter...
-This concepts and proofs are based on lecture portfolio optimization by Prof. Pichler. \citet{PichlerPortfoliooptimierung}
-\section{Preliminaries}
-To obtain the present value $PV$ from a future value $FV$ at time $t>0$ we use the well-known formula $PV = FV e^{-\delta t}$ for some $\delta\in\mathbb{R}$. Hence, the so-called force of interest reads as follows
+For the sake of convenience, a real-valued random variable always maps to the measurable space $\R=(\R,\mathcal{B}(\R))$ with abuse of notation, while $\mathcal{B}(\R)$ is the Borel\footnote{F\'elix \'Edouard Justin \'Emile Borel (1871-1956) was a French mathematician}$\sigma$-algebra on $\R$. \medskip
+
+This elaboration analyzes Markowitz-like models with different risk measures, i.e. concretely we are looking for an allocation vector $x\in\R^J$ that optimizes the following problems
+\begin{equation}
+    \label{problem:Markowitz}
+    \begin{aligned}
+        & \underset{x\in\R^J}{\mathrm{minimize}} & & \var x^\top\xi \\
+        & \mathrm{subject\,to} & & \E x^\top\xi \geq \mu\;\;\;\;\;\;\;\;\;\;\;\; \\
+        & & & x^\top\one = 1
+    \end{aligned}
+\end{equation}
+\begin{equation}
+    \label{problem:UtilityMaximization}
+    \begin{aligned}
+        & \underset{x\in\R^J}{\mathrm{maximize}} & & \E x^\top\xi - \frac{\kappa}{2}\var x^\top\xi \\
+        & \mathrm{subject\,to} & & x^\top\one = 1\\\\
+    \end{aligned}
+\end{equation}
+\begin{equation}
+    \label{problem:LinearProgram}
+    \begin{aligned}
+        & \underset{x\in\R^J}{\mathrm{minimize}} & & \E x^\top\xi + \mathcal{R}_{\alpha,\gamma}(-x^\top\xi)\; \\
+        & \mathrm{subject\,to} & & \E x^\top\xi \geq \mu \\
+        & & & x^\top\one = 1
+    \end{aligned}
+\end{equation}
+with the risk measure $\mathcal{R}_{\alpha,\gamma}(X) = (1-\gamma)\E X + \gamma\AVaR_\alpha(X)$ for $\alpha,\gamma\in(0,1)$ and a real-valued random variable $X\colon\Omega\to\R$ defined on the probability space $(\Omega, \Sigma, \pr)$. \medskip
+
+These models have different strengths and weaknesses. A model outcome may be very vulnerable to small changes in serval input parameters and cause unstable results. Others are less sensitive and are necessary for a robust model. We are going to highlight the respective sensitivities of each model given different parameters. Therefore, we give a mathematical approach to measure sensitivity in section \ref{section:SensitivityAnalysis}. Afterwards, we analyze the models (\ref{problem:Markowitz}), (\ref{problem:UtilityMaximization}) and (\ref{problem:LinearProgram}). A numerical approach to risk and the solutions of these three problems is given in section \ref{section:MathematicalModels}. To this end, we reuse the stock data from the lecture notes \cite{PichlerPortfoliooptimierung}, to allow better comparability of the models and results. In addition, in section \ref{section:SimulationOfStocks} we derive an algorithm to simulate stock data.
+
+\begin{figure}[h]
+  \centering
+  \includesvg[width=\textwidth]{assets/plotStocks}
+  \caption{Stock prices from \cite[p.~18]{PichlerPortfoliooptimierung}}
+\end{figure}
+\section{Preliminaries}\label{section:Preliminaries}
+To obtain the present value $PV$ from a future value $FV$ at time $t>0$ we use the well-known formula $PV = FV e^{-\delta t}$ for some $\delta\in\mathbb{R}$, cf. \citet[p.~21]{PichlerStochastischeFinanzmaerkte}. Hence, the force of interest reads
     \begin{align*}
         \delta = \frac{1}{t}\ln\left(\frac{FV}{PV}\right).
     \end{align*}
-In the same way, we design the returns of our assets. For timestamps $\{t_0,\ldots,t_n\}$, the return per time period $[t_{i-1}, t_i]$ of the asset $j\in\{1,\ldots,J\}$ is given by
+In the same way, we design the returns of our assets, cf. \citet[pp.~19-20]{PichlerPortfoliooptimierung}. For timestamps $\{t_0,\ldots,t_n\}$, the return per time period $[t_{i-1}, t_i]$ of the asset $j\in\{1,\ldots,J\}$ is given by
 \begin{equation*}
     \xi_i^j := \frac{1}{t_i-t_{i-1}}\ln\left(\frac{S_{t_i}^j}{S_{t_{i-1}}^j}\right).
 \end{equation*}
@@ -155,12 +186,12 @@ We store these stock observations in a matrix
 \begin{equation*}
     \Xi =
     \begin{pmatrix}
-        \xi_0^1 & \cdots & \xi_0^J \\
+        \xi_1^1 & \cdots & \xi_1^J \\
         \vdots  & \ddots & \vdots  \\
         \xi_n^1 & \cdots & \xi_n^J
-    \end{pmatrix}
+    \end{pmatrix}\in\R^{n\times J}
 \end{equation*}
-We introduce a probability measure $\pr(\xi = \xi_i^j)\in[0,1]$ for a random variable $\xi\colon\Omega\to\R$.\footnote{$(\Omega,\Sigma,\pr)$ probability space and $(\R,\mathcal{B})$ standard Borel space as usual} We will store these probabilities for every stock $j\in\{1,\ldots,J\}$ in the probability vector
+We introduce a probability measure $\pr(\xi = e_i^\top\Xi)\in[0,1]$ for a random variable $\xi\colon\Omega\to\R^J$ and a probability space $(\Omega,\Sigma,\pr)$ and a measurable space with Borel $\sigma$-algebra $(\R^J,\mathcal{B}(\R^J))$ again. We will store these probabilities for every stock $j\in\{1,\ldots,J\}$ in the probability vector
 \begin{equation*}
     p =
     \begin{pmatrix}
@@ -169,9 +200,9 @@ We introduce a probability measure $\pr(\xi = \xi_i^j)\in[0,1]$ for a random var
         p_n
     \end{pmatrix} =
     \begin{pmatrix}
-        \pr(\xi = \xi_1^j) \\
+        \pr(\xi = e_1^\top\Xi) \\
         \vdots \\
-        \pr(\xi = \xi_n^j)
+        \pr(\xi = e_n^\top\Xi)
     \end{pmatrix} =
     \begin{pmatrix}
         \frac{t_1-t_0}{t_n-t_0} \\
@@ -179,7 +210,7 @@ We introduce a probability measure $\pr(\xi = \xi_i^j)\in[0,1]$ for a random var
         \frac{t_n-t_{n-1}}{t_n-t_0}
     \end{pmatrix}
 \end{equation*}
-with property $\sum_{i=1}^n\pr(\xi = \xi_i^j) = \sum_{i=1}^n p_i = 1$. Then we obtain after canceling another telescoping sum the expected return for every stock and store them in a vector $r = \E\xi = p^\top\Xi \in\R^J$ with
+with property $\sum_{i=1}^n\pr(\xi = e_i^\top\Xi) = \sum_{i=1}^n p_i = 1$. Then we obtain after canceling another telescoping sum the expected return for every stock and store them in a vector $r = \E\xi = p^\top\Xi \in\R^J$,
 \begin{equation*}
     \begin{aligned}
     r_j 
@@ -190,41 +221,106 @@ with property $\sum_{i=1}^n\pr(\xi = \xi_i^j) = \sum_{i=1}^n p_i = 1$. Then we o
     &= \frac{1}{t_n-t_0}\ln\left(\frac{S_{t_n}^j}{S_{t_0}^j}\right).
     \end{aligned}
 \end{equation*}
-\section{Simulation of Stocks}
-Let $\mu\in\R$ describe the drift and $\sigma\geq0$ represent the volatility of our stock. To simulate a single stock in numerical analysis, we use the Geometric Brownian Motion. It is the solution of the stochastic differential equation
-\begin{equation*}
-    dS_t = \mu S_tdt + \sigma S_tdW_t
-\end{equation*}
-where $W_t$ is a Wiener process, also known as Brownian Motion. The equation has the solution
-\begin{equation*}
-    S_t = S_0\exp\left(\left(\mu-\frac{\sigma^2}{2}\right)t+\sigma W_t\right)
-\end{equation*}
-for some start stock value $S_0\in\R_{\geq0}$ and this leads to the following algorithm:
-\RestyleAlgo{ruled}
-\SetKwComment{Comment}{// }{}
-\begin{algorithm}
-    \caption{Geometric Brownian Motion}
-    \label{algo:GBM}
-    \KwData{$s_0\in\R_{\geq0}, \mu\in\R, \sigma\geq0$}
-    $S_0 \gets s_0$\;
-    $i \gets 1$\;
-    \While{$i \leq n$}{
-        $N_i \gets \mathcal{N}(0,p_i)$ \Comment*[r]{$N_i\sim\mathcal{N}\left(\mu^\prime, \sigma^{\prime2}\right)$ normally distributed}
-        $S_i \gets S_{i-1}\exp\left(\left(\mu-\frac{\sigma^2}{2}\right)p_i + \sigma N_i\right)$\;
-        $i \gets i+1$\;
-    }
-    \KwResult{$S\in\R_{\geq0}^n$}
-\end{algorithm}
-\newpage
-\section{Mathematical Models}
+For the rest of section \ref{section:Preliminaries} Preliminaries cf. \citet[pp.~20,21,35,44]{PichlerPortfoliooptimierung}.
+\begin{lemma}
+    Let $x\in\R^J$ be an arbitrary allocation.
+    \begin{enumerate}
+        \item $\E x^\top\xi = x^\top r$ and
+        \item $\var x^\top\xi = x^\top\Sigma x$.
+    \end{enumerate}
+\end{lemma}\newpage
+\begin{proof}\mbox{}
+    \begin{enumerate}[\itshape(i)]
+        \item $\E x^\top\xi 
+                = \sum_{i=1}^np_i\left(\sum_{j=1}^J\xi_i^jx_j\right)
+                = p^\top\Xi x
+                = r^\top x
+                = x^\top r$ and
+        \item $\var x^\top\xi
+                = \E(x^\top\xi-\E x^\top\xi)^2
+                = \E(x^\top\xi)^2 - (\E x^\top\xi)^2
+                = \sum_{i=1}^np_i\left(\sum_{i=1}^J\xi_i^jx_j\right)^2 - \left(\sum_{i=1}^np_i\xi_i^jx_j\right)^2 \\
+                = \sum_{i=1}^np_i\left(\sum_{j=1}^J\sum_{j^\prime=1}^J\xi_i^jx_j\cdot\xi_i^{j^\prime}x_{j^\prime}\right) - \sum_{i=1}^np_i\left(\sum_{j=1}^J\xi_i^jx_j\right)\cdot\sum_{i^\prime=1}^np_{i^\prime}\left(\sum_{j^\prime=1}^J\xi_{i^\prime}^{j^\prime}x_{j^\prime}\right) \\
+                = \sum_{j=1}^Jx_j\sum_{j^\prime=1}^Jx_{j^\prime}\cdot\sum_{i=1}^np_i\xi_i^j\xi_i^{j^\prime} - \sum_{j=1}^Jx_j\sum_{j^\prime=1}^Jx_{j^\prime}\cdot\sum_{i=1}^np_i\xi_i^j\sum_{i^\prime=1}^np_{i^\prime}\xi_{i^\prime}^{j^\prime} \\
+                = \sum_{j=1}^Jx_j\sum_{j^\prime=1}^Jx_{j^\prime}\cdot\left(\sum_{i=1}^np_i\xi_i^j\xi_i^{j^\prime}-\sum_{i=1}^np_i\xi_i^j\cdot\sum_{i^\prime=1}^np_{i^\prime}\xi_{i^\prime}^{j^\prime}\right) \\
+                = \sum_{j=1}^Jx_j\sum_{j^\prime=1}^Jx_{j^\prime}\cdot\Sigma_{jj^\prime} = x^\top\Sigma x$.
+    \end{enumerate}
+\end{proof}
+\begin{remark}
+    The Markowitz optimization problem (\ref{problem:Markowitz}) now reads
+    \begin{equation}
+    \label{problem:MarkowitzNew}
+        \begin{aligned}
+            & \underset{x\in\R^J}{\mathrm{minimize}} & & x^\top\Sigma x \\
+            & \mathrm{subject\,to} & & x^\top r \geq \mu \\
+            & & & x^\top\one = 1
+        \end{aligned}
+    \end{equation}
+    and the utility maximization problem (\ref{problem:UtilityMaximization}) is equivalent to
+    \begin{equation}
+    \label{problem:UtilityMaximizationNew}
+        \begin{aligned}
+            & \underset{x\in\R^J}{\mathrm{maximize}} & & x^\top r - \frac{\kappa}{2}x^\top\Sigma x \\
+            & \mathrm{subject\,to} & & x^\top\one = 1.
+        \end{aligned}
+    \end{equation}
+\end{remark}
+\begin{definition}
+Let $X\colon\Omega\to\R$ be a real-valued random variable defined on the probability space $(\Omega,\Sigma,\Pr)$. Further, we denote the cumulative distribution function of $X$ by $F_X(x)=\Pr(X\leq x)$. Then we define for an $\alpha\in(0,1)$
+    \begin{enumerate}[\itshape(i)]
+        \item the \emph{Value at Risk at level} $\alpha$ or\emph{ quantile function}
+        \begin{equation*}
+            \VaR_\alpha(X) = F_X^{-1}(\alpha)
+        \end{equation*}
+        \item and the \emph{Average Value at Risk at level} $\alpha$ or \emph{expected shortfall}
+        \begin{equation*}
+            \AVaR_\alpha(X) = \frac{1}{1-\alpha}\int_\alpha^1\VaR_{\alpha^\prime}(X)\,\mathrm{d}\alpha^\prime.
+        \end{equation*}
+    \end{enumerate}
+\end{definition}
+\begin{remark}
+    For $\alpha\in\{0,1\}$ we have
+    \begin{enumerate}[\itshape(i)]
+        \item $\VaR_0(X) = -\infty$ and $\VaR_1(X) = \infty$ as well
+        \item $\AVaR_0(X) = \E X$ and $\AVaR_1(X) = \esssup X$.
+    \end{enumerate}
+\end{remark}
+\begin{lemma}\label{lemma:AVaR} Let $X\colon\Omega\to\R$ be a real-valued random variable defined on the probability space $(\Omega,\Sigma,\Pr)$. We denote the positive part of a function by $(\cdot)^+=\max\{0,\cdot\}$. Then for all $\alpha\in(0,1)$
+    \begin{equation*}
+        \AVaR_\alpha(X) = \inf_{q\in\R}q+\frac{1}{1-\alpha}\E(X-q)^+.
+    \end{equation*}
+\end{lemma}
+\begin{proof}
+    From first-order optimality condition we receive
+    \begin{equation*}
+        \begin{aligned}
+            0 &\overset{!}{=} \frac{\mathrm{d}}{\mathrm{d}q}\left(q+\frac{1}{1-\alpha}\E(X-q)^+\right)
+            = 1 - \frac{1}{1-\alpha}\E\one_{\{X>q\}} \\
+            &= 1 - \frac{1}{1-\alpha}\Pr(X>q)
+            = 1 - \frac{1}{1-\alpha}(1-\Pr(X\leq q))
+        \end{aligned}
+    \end{equation*}
+    and the optimal solution is $q^* = q = F_X^{-1}(\alpha) = \VaR_\alpha(X)$. Hence, we get the result
+    \begin{equation*}
+        \begin{aligned}
+            q^* + \frac{1}{1-\alpha}\E(X-q^*)^+
+            &= \VaR_\alpha(X) + \frac{1}{1-\alpha}\int_0^1(\VaR_{\alpha^\prime}(X)-\VaR_\alpha(X))^+\,\mathrm{d}\alpha^\prime \\
+            &= \VaR_\alpha(X) + \frac{1}{1-\alpha}\int_\alpha^1\VaR_{\alpha^\prime}(X)-\VaR_\alpha(X)\,\mathrm{d}\alpha^\prime \\
+            &= \frac{1}{1-\alpha}\int_\alpha^1\VaR_{\alpha^\prime}(X)\,\mathrm{d}\alpha^\prime
+            = \AVaR_\alpha(X).
+        \end{aligned}
+    \end{equation*}
+\end{proof}
+\section{Mathematical Models}\label{section:MathematicalModels}
+For section \ref{section:MathematicalModels} Mathematical Models cf. \citet[pp.~23,24,27,32,52]{PichlerPortfoliooptimierung}.
 \subsection{Markowitz Model}
 \begin{theorem}
     Let $r = \E\xi \in\R^J$ be the expected return of the portfolio and $\mu\geq0$ be a lower bound of the expected return $\E x^\top\xi\in\R$ to an allocation $x\in\R^J$. Then the optimization problem
     \begin{equation*}
         \begin{aligned}
-            & \underset{x\in\R^J}{\mathrm{minimize}} & & f(x) = x^\top\Sigma x \\
+            & \underset{x\in\R^J}{\mathrm{minimize}} & & x^\top\Sigma x \\
             & \mathrm{subject\,to} & & x^\top r \geq \mu \\
-            & & & x^\top\one \leq 1
+            & & & x^\top\one = 1
         \end{aligned}
     \end{equation*}
     has an explicit solution $x^*\colon\R_{\geq 0}\to\R^J$ defined by
@@ -243,21 +339,101 @@ for some start stock value $S_0\in\R_{\geq0}$ and this leads to the following al
     \end{equation*}
 \end{theorem}
 \begin{proof}
-    
+    From the objective and constraints, we receive the Lagrangian\footnote{Joseph-Louis Lagrange (1736-1813) was an Italian and naturalized French mathematician, physicist and astronomer}and its partial derivatives
+    \begin{equation*}
+        \begin{aligned}
+            L(x,\lambda_1,\lambda_2)
+        &= \frac{1}{2}x^\top\Sigma x
+        + \lambda_1\left(\mu-x^\top r\right)
+        + \lambda_2\left(1-x^\top\one\right) \\\\
+        0 &\overset{!}{=} \frac{\partial L}{\partial x}
+        = \Sigma x - \lambda_1r - \lambda_2\one\\
+        0 &\overset{!}{=} \frac{\partial L}{\partial\lambda_1}
+        = \mu-x^\top r\\
+        0 &\overset{!}{=} \frac{\partial L}{\partial\lambda_2}
+        = 1-x^\top\one
+        \end{aligned}
+    \end{equation*}
+    with shadow prices $\lambda_1,\lambda_2\in\R$. Hence, from the optimal condition, we get
+    \begin{equation*}
+        \begin{aligned}
+            x^* &= \precision(\lambda_1^*r + \lambda_2^*\one)
+            = \lambda_1^*\precision r + \lambda_2^*\precision\one \\\\
+            \mu &= (x^*)^\top r = r^\top x^* = \lambda_1^*r^\top\precision r + \lambda_2^*r^\top\precision\one \\
+            1 &= (x^*)^\top\one = \one^\top x^* = \lambda_1^*\one^\top\precision r + \lambda_2^*\one^\top\precision\one
+        \end{aligned}
+    \end{equation*}
+    or rewritten in a matrix equation
+    \begin{equation*}
+        \begin{pmatrix}
+            \A & \B \\
+            \B & \C
+        \end{pmatrix}
+        \begin{pmatrix}
+            \lambda_1^* \\
+            \lambda_2^*
+        \end{pmatrix} =
+        \begin{pmatrix}
+            \mu \\
+            1
+        \end{pmatrix}
+    \end{equation*}
+    with solutions 
+    \begin{equation*}
+        \begin{aligned}
+            \lambda_1^* &= \lambda_1^*(\mu) = \frac{\mu(\C)-(\B)}{(\A)(\C)-(\B)^2}\;\text{and} \\
+            \lambda_2^* &= \lambda_2^*(\mu) = \frac{(\A)-\mu(\B)}{(\A)(\C)-(\B)^2}.
+        \end{aligned}
+    \end{equation*}
+    Hence, the optimal allocation solution is now obtained with
+    \begin{equation*}
+        \begin{aligned}
+            x^* = x^*(\mu) = \lambda_1^*(\mu)\precision r + \lambda_2^*(\mu)\precision\one.
+        \end{aligned}
+    \end{equation*}
 \end{proof}
 \begin{corollary}
-    The solution (\ref{eq:markowitz-solution}) is an affine combination.
+\label{cor:AffineFunction}
+    The components of solution (\ref{eq:markowitz-solution}) are affine functions.
 \end{corollary}
 \begin{proof}
-    
+    We can reorder (\ref{eq:markowitz-solution}) and receive the statement
+    \begin{equation}
+    \label{eq:AffineFunction}
+        \begin{aligned}
+            x^*(\mu) &=
+            \lambda_1^*(\mu)\precision r + \lambda_2^*(\mu)\precision\one \\
+            &= \frac{\mu(\C)-(\B)}{(\A)(\C)-(\B)^2}\precision r + \frac{(\A)-\mu(\B)}{(\A)(\C)-(\B)^2}\precision\one \\
+            &= \mu\underbrace{\frac{(\C)\precision r - (\B)\precision\one}{\D}}_{\text{slope vector}} + \underbrace{\frac{(\A)\precision\one - (\B)\precision r}{\D}}_{\text{intercept vector}}.
+        \end{aligned}
+    \end{equation}
 \end{proof}
+\begin{corollary}\emph{(Two fund Theorem)}
+    Let $x_1^* = x^*(\mu_1)\in\R^J$ and $x_2^* = x^*(\mu_2)\in\R^J$ be two solutions of (\ref{problem:Markowitz}) for different $\mu_1,\mu_2\geq0$, i.e. $\mu_1\neq\mu_2$. Then every affine combination of these two allocations is also a solution of (\ref{problem:Markowitz}).
+\end{corollary}
+\begin{proof}
+     Since Corollary \ref{cor:AffineFunction} the components of (\ref{eq:markowitz-solution}) are affine functions. So, let $u\in\R^J$ denote the slope vector and let $v\in\R^J$ be the intercept vector of the optimal solution. Now we can write $x_1^*=\mu_1u+v$ and $x_2^*=\mu_2u+v$. Then the affine combination of $x_1^*$ and $x_2^*$
+    \begin{equation*}
+        \begin{aligned}
+            (1-\theta)x_1^* + \theta x_2^*
+            = (1-\theta)(\mu_1u+v) + \theta(\mu_2u+v)
+            = \underbrace{((1-\theta)\mu_1 + \theta\mu_2)}_{\in\R}u + \underbrace{((1-\theta)+\theta)}_{=1}v
+        \end{aligned}
+    \end{equation*}
+    for $\theta\in\R$, is indeed a solution of (\ref{problem:Markowitz}) as well.
+\end{proof}
+\begin{figure}[h]
+  \centering
+  \includesvg[width=\textwidth]{assets/plotAllocation}
+  \caption{Asset allocation according to Markowitz model (\ref{problem:Markowitz}), cf. \citet[p.~27]{PichlerPortfoliooptimierung}}
+\end{figure}\newpage
 \subsection{Utility Maximization}
 \begin{theorem}
     Let $r = \E\xi \in\R^J$ be the expected return of the portfolio and $\kappa>0$ be a measure of risk aversion. Then the optimization problem
     \begin{equation*}
         \begin{aligned}
-            & \underset{x\in\R^J}{\mathrm{minimize}} & & g(x) = x^\top r - \frac{\kappa}{2}x^\top\Sigma x \\
-            & \mathrm{subject\,to} & & x^\top\one \leq 1
+            & \underset{x\in\R^J}{\mathrm{maximize}} & & x^\top r - \frac{\kappa}{2}x^\top\Sigma x \\
+            & \mathrm{subject\,to} & & x^\top\one = 1
         \end{aligned}
     \end{equation*}
     has an explicit solution $x^*\colon\R_{>0}\to\R^J$ defined by
@@ -269,20 +445,430 @@ for some start stock value $S_0\in\R_{\geq0}$ and this leads to the following al
     \end{equation}
 \end{theorem}
 \begin{proof}
-    
+    From the objective and constraints, we receive the Lagrangian and its partial derivatives
+    \begin{equation*}
+        \begin{aligned}
+            L(x,\lambda) &= x^\top r - \frac{\kappa}{2}x^\top\Sigma x + \lambda(x^\top\one - 1) \\\\
+            0 &\overset{!}{=} \frac{\partial L}{\partial x} = r - \kappa\Sigma x + \lambda\one \\
+            0 &\overset{!}{=} \frac{\partial L}{\partial \lambda} = x^\top\one - 1
+        \end{aligned}
+    \end{equation*}
+    with shadow price $\lambda\in\R$. Hence, from the optimal condition, we get
+    \begin{equation*}
+        \begin{aligned}
+            x^* &= \frac{1}{\kappa}\precision(r+\lambda^*\one) \\
+            1 &= (x^*)^\top\one = \one^\top x^* = \frac{1}{\kappa}\one^\top\precision r + \frac{\lambda^*}{\kappa}\one^\top\precision\one
+        \end{aligned}
+    \end{equation*}
+    and after rearrangement $\lambda^*=\frac{\kappa-\one^\top\precision r}{\C}=\frac{\kappa-\B}{\C}$. Then we obtain the optimal solution
+    \begin{equation*}
+        x^* = x^*(\kappa) = \frac{1}{\kappa}\precision\left(r+\frac{\kappa-\B}{\C}\one\right).
+    \end{equation*}
 \end{proof}
+\begin{figure}[h]
+  \centering
+  \includesvg[width=\textwidth]{assets/plotAllocationUtilityMaximization}
+  \caption{Asset allocation according to model (\ref{problem:UtilityMaximization})}
+\end{figure}\newpage
 \begin{corollary}
     The following statements hold true.
     \begin{enumerate}
-        \item Solutions (\ref{eq:markowitz-solution}) and (\ref{eq:utility-maximization}) coincide for $\kappa = \frac{\D}{\mu(\C) - (\B)}$ and
-        \item Solution (\ref{eq:utility-maximization}) converges to a minimal variance portfolio for $\kappa\to\infty$.
+        \item The solutions (\ref{eq:markowitz-solution}) and (\ref{eq:utility-maximization}) coincide for $\kappa = \frac{\D}{\mu(\C) - (\B)}$ and
+        \item The solution (\ref{eq:utility-maximization}) converges to an allocation $x^*=\frac{1}{\C}\precision\one$ for $\kappa\to\infty$ with
+        \item Convergence rate of $\mathcal{O}(\frac{1}{\kappa})$.
     \end{enumerate}
 \end{corollary}
-\begin{proof}
-    
+\begin{proof}\mbox{}
+    \begin{enumerate}[\itshape(i)]
+        \item Let us have a look at the solutions (\ref{eq:markowitz-solution}) and (\ref{eq:utility-maximization})
+        \begin{equation*}
+            \begin{aligned}
+                x^* &= \lambda_1^*(\mu)\precision r + \lambda_2^*(\mu)\precision\one \\
+                x^* &= \frac{1}{\kappa}\precision r + \frac{\kappa-(\B)} {\kappa(\C)}\precision\one.
+            \end{aligned}
+        \end{equation*}
+        Comparing the coefficients delivers $\lambda_1^*(\mu) \overset{!}{=} \frac{1}{\kappa}$. Hence, the statement $\kappa = \lambda_1^*(\mu)^{-1}$ follows.
+        \item The Statement follows by rewriting the solution
+        \begin{equation*}
+            \begin{aligned}
+                x^*(\kappa) 
+                &= \frac{1}{\kappa}\precision r + \frac{\kappa-(\B)}{\kappa(\C)}\precision\one \\
+                &= \frac{1}{\kappa}\precision r + \frac{1}{\C}\left(\precision\one - \frac{\B}{\kappa}\precision\one\right)
+            \end{aligned}
+        \end{equation*}
+        and push it to the limit $x^* = \lim_{\kappa\to\infty}x^*(\kappa) = \frac{1}{\C}\precision\one$.
+        \item The error can be estimated by
+        \begin{equation*}
+            \begin{aligned}
+                \Vert x^*(\kappa)-x^*\Vert
+                &=\Vert x^*(\kappa)-\lim_{\kappa\to\infty}x^*(\kappa)\Vert\\
+                &= \left\Vert\frac{1}{\kappa}\precision r+\frac{1}{\C}\precision\one - \frac{\B}{\kappa(\C)}\precision\one -\frac{1}{\C}\precision\one\right\Vert \\
+                &= \left\Vert\frac{1}{\kappa}\precision\left(r - \frac{\B}{\C}\one\right)\right\Vert
+                \leq \frac{1}{\kappa}\left\Vert\precision\left(r - \frac{\B}{\C}\one\right)\right\Vert.
+            \end{aligned}
+        \end{equation*}
+        Since the latter norm remains constant, the convergence rate is $\mathcal{O}(\frac{1}{\kappa})$.
+    \end{enumerate}
+    Hence, the sensitivity shrinks for sufficiently large and growing risk aversion $\kappa\gg0$.
 \end{proof}
+\subsection{Linear Programming}
+\begin{theorem}
+    The optimization problem (\ref{problem:LinearProgram}) can be formulated as a linear program of the form
+    \begin{equation}
+    \label{problem:LinearProgrammNew}
+        \begin{aligned}
+        & \underset{x^\prime}{\mathrm{minimize}} & & c^\top x^\prime\\
+        & \mathrm{subject\,to} & & A_1x^\prime\leq b_1 \\
+        & & & A_2x^\prime=b_2.
+        \end{aligned}
+    \end{equation}
+\end{theorem}
+\begin{proof}
+    Recall the risk measure $\mathcal{R}_{\alpha,\gamma}(X)=(1-\gamma)\E X + \gamma\AVaR_\alpha(X)$. Using Lemma \ref{lemma:AVaR} the objective function of the minimization problem (\ref{problem:LinearProgram}) reads
+    \begin{equation*}
+        \E x^\top\xi + \mathcal{R}_{\alpha,\gamma}(-x^\top\xi)
+        =\gamma\E x^\top\xi + \gamma\AVaR_\alpha(-x^\top\xi)
+        =\gamma\E x^\top\xi + \gamma\inf_{q\in\R}q+\frac{1}{1-\alpha}\E(-x^\top\xi-q)^+.
+    \end{equation*}
+    To achieve a linear objective, we estimate the $(\cdot)^+=\max\{0,\cdot\}$ with slack-variables $z_1,\ldots,z_n\geq0$ the following way
+    \begin{equation*}
+        \begin{aligned}
+            0 &\leq -x^\top\xi-q \leq z_1 \\
+            &\;\;\vdots\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\vdots \\
+            0&\leq -x^\top\xi-q\leq z_n.
+        \end{aligned}
+    \end{equation*}
+    With the notation $\E x^\top\xi = x^\top r$ the optimization problem reads as follows
+    \begin{equation*}
+        \begin{aligned}
+        & \underset{x,q,z}{\mathrm{minimize}} & & \gamma x^\top r+\gamma q+\gamma\frac{1}{1-\alpha}p^\top z\\
+        & \mathrm{subject\,to} & & -x^\top r\leq-\mu \\
+        & & & -x^\top\xi_i-q\leq z_i \\
+        & & & \;\;\;\,x^\top\one = 1
+        \end{aligned}
+    \end{equation*}
+    for $i=1,\ldots,n$. Or rewritten with $x^\prime = 
+    \begin{pmatrix}
+        x & q & z
+    \end{pmatrix}^\top=
+    \begin{pmatrix}
+        x_1 & \cdots & x_J & q & z_1 & \cdots & z_n
+    \end{pmatrix}^\top$
+    \begin{equation}\label{problem:LinearProgrammFullMatrix}
+        \begin{aligned}
+        & \underset{x,q,z}{\mathrm{minimize}} & & 
+        \begin{pmatrix}
+            \gamma r^\top & \gamma q & \gamma\frac{1}{1-\alpha}p^\top
+        \end{pmatrix}
+        \begin{pmatrix}
+            x \\
+            q \\
+            z
+        \end{pmatrix}\\
+        & \mathrm{subject\,to} & &
+        \begin{pmatrix}
+            -r_1 & \cdots & -r_J & 0 & 0 & \cdots & 0 \\
+            -e_1^\top\Xi e_1 & \cdots & e_1^\top\Xi e_J &-1&-1& \cdots &0 \\
+            \vdots & \ddots & \vdots & \vdots & \vdots & \ddots & \vdots \\
+            -e_n^\top\Xi e_1 & \cdots & -e_n^\top\Xi e_J & -1 &0& \cdots & -1
+        \end{pmatrix}
+        \begin{pmatrix}
+            x \\
+            q \\
+            z
+        \end{pmatrix}\leq
+        \begin{pmatrix}
+            -\mu \\
+            0 \\
+            \vdots \\
+            0
+        \end{pmatrix}\\
+        & \mathrm{and} & &
+        \begin{pmatrix}
+            1 & \cdots & 1 & 0 & 0 & \cdots & 0
+        \end{pmatrix}
+        \begin{pmatrix}
+            x \\
+            q \\
+            z
+        \end{pmatrix} = 1.
+        \end{aligned}
+    \end{equation}
+    Hence, a linear program of the form (\ref{problem:LinearProgrammNew}).
+\end{proof}
+\begin{remark}
+    The problem (\ref{problem:LinearProgrammNew}) is well-known and can be solved using the simplex algorithm.
+\end{remark}
+\begin{figure}[h]
+  \centering
+  \includesvg[width=\textwidth]{assets/plotAllocationLinearProgramming}
+  \caption{Asset allocation according to model (\ref{problem:LinearProgram})}
+\end{figure}\newpage
+\section{Simulation of Stocks}\label{section:SimulationOfStocks}
+Let $\mu\in\R$ describe the drift and $\sigma\geq0$ represent the volatility of our stock. To simulate a single stock in numerical analysis, we use the Geometric Brownian Motion. It is the solution of the stochastic differential equation
+\begin{equation*}
+    dS_t = \mu S_tdt + \sigma S_tdW_t
+\end{equation*}
+where $W_t$ is a Wiener process, also known as Brownian Motion. The equation has the solution
+\begin{equation*}
+    S_t = S_0\exp\left(\left(\mu-\frac{\sigma^2}{2}\right)t+\sigma W_t\right)
+\end{equation*}
+for some start stock value $S_0\in\R_{\geq0}$, cf. \citet[p.~113]{PichlerStochastischeFinanzmaerkte}. This leads to the following algorithm:
+\RestyleAlgo{ruled}
+\SetKwComment{Comment}{// }{}
+\begin{algorithm}
+    \caption{Geometric Brownian Motion}
+    \label{algo:GBM}
+    \KwData{$s_0\in\R_{\geq0}, \mu\in\R, \sigma\geq0$}
+    $S_0 \gets s_0$\;
+    $i \gets 1$\;
+    \While{$i \leq n$}{
+        $N_i \gets N\sim\mathcal{N}(0,p_i)$ \Comment*[r]{$N\sim\mathcal{N}\left(\mu^\prime, \sigma^{\prime2}\right)$ is normally distributed}
+        $S_i \gets S_{i-1}\exp\left(\left(\mu-\frac{\sigma^2}{2}\right)p_i + \sigma N_i\right)$\;
+        $i \gets i+1$\;
+    }
+    \KwResult{$S\in\R_{\geq0}^n$}
+\end{algorithm}
 
+\section{Sensitivity analysis}\label{section:SensitivityAnalysis}
+In this chapter, we investigate how sensitive outputs act by small changes for an arbitrary input parameter $\theta\in T$, e.g. $\theta=\mu\geq 0$ or $\theta=\kappa > 0$. First, we define the following Sensitivity operators
+\begin{definition}
+Let $T$ be the feasible set of a model input parameter and $C(T,X)$ the space of continuous functions $X^T$ with $X\subseteq\R^J$. Then we call
+\begin{enumerate}[\itshape(i)]
+    \item $\mathcal{S}\colon T\to\mathcal{C}(T,X)$ given by
+    \begin{equation*}
+        \mathcal{S}(\theta)
+        = \frac{\partial x^*}{\partial\theta}
+    \end{equation*}
+    the \emph{absolute Sensitivity} of the numerical model with an optimal solution $x^*$ and
+    \item $\mathcal{E}\colon T\to\mathcal{C}(T,X)$ given by
+    \begin{equation*}
+        \mathcal{E}(\theta) = \frac{\partial\ln(x^*)}{\partial\ln(\theta)}
+    \end{equation*}
+    the \emph{relative Sensitivity} or \emph{Elasticity} of the numerical model with an optimal solution $x^*$.
+\end{enumerate}
+\end{definition}
+\begin{lemma}
+For all parameters $\theta\in T$ holds
+    \begin{equation*}
+        \mathcal{E}(\theta) = \frac{\theta}{x^*}\mathcal{S}(\theta).
+    \end{equation*}
+\end{lemma}
+\begin{proof}
+We will use the derivative of the logarithm $\frac{\mathrm{d}\ln(x)}{\mathrm{d}x}=\frac{1}{x}$ and apply the chain rule
+    \begin{equation*}
+        \mathcal{E}(\theta) 
+        = \frac{\partial\ln(x^*)}{\partial\ln(\theta)}
+        = \frac{\partial\ln(x^*)}{\partial\theta}\cdot\frac{\partial\theta}{\partial\ln(\theta)}
+        = \frac{1}{x^*}\frac{\partial x^*}{\partial\theta}\cdot\theta
+        = \frac{\theta}{x^*}\frac{\partial x^*}{\partial\theta}.
+    \end{equation*}
+    Hence, we receive the result $\mathcal{E}(\theta)=\frac{\theta}{x^*}\mathcal{S}(\theta)$.
+\end{proof}
+\begin{lemma}
+For all parameters $\theta\in T$ holds
+    \begin{equation*}
+        \mathcal{E}(\theta) = \lim_{\Delta\theta\to 0}\frac{\frac{\Delta x^*}{x^*}}{\frac{\Delta\theta}{\theta}}.
+    \end{equation*}
+\end{lemma}
+\begin{proof}
+    It holds
+    \begin{equation*}
+        \mathcal{E}(\theta)
+        = \frac{\theta}{x^*}\mathcal{S}(\theta)
+        = \frac{\theta}{x^*}\frac{\partial x^*}{\partial\theta}
+        = \frac{\theta}{x^*}\lim_{\Delta\theta\to 0}\frac{\Delta x^*}{\Delta\theta}
+        = \lim_{\Delta\theta\to 0}\frac{\frac{\Delta x^*}{x^*}}{\frac{\Delta\theta}{\theta}}.
+    \end{equation*}
+\end{proof}
+\begin{remark}
+    We can determine Sensitivity and Elasticity numerically by $\mathcal{S}(\theta) \approx \frac{\Delta x^*}{\Delta\theta}$ and $\mathcal{E}(\theta) \approx \frac{\Delta x^*}{x^*}/\frac{\Delta\theta}{\theta}$ respectively for sufficient small $\Vert\Delta\theta\Vert\ll 1$.
+\end{remark}
 
+\subsection{Markowitz model}
+\begin{theorem}
+\label{thm:MarkowitzSensitivity}
+    The sensitivity of (\ref{eq:markowitz-solution}) with respect to $\mu$ is given by
+    \begin{equation*}
+        \mathcal{S}(\mu) = \frac{\C}{\D}\precision r - \frac{\B}{\D}\precision\one.
+    \end{equation*}
+\end{theorem}
+\begin{proof}
+    We reuse equation (\ref{eq:AffineFunction}) in the proof of Corollary \ref{cor:AffineFunction} and differentiate the solution
+    \begin{equation*}
+        \begin{aligned}
+            x^*(\mu) 
+            &= \mu\frac{(\C)\precision r - (\B)\precision\one}{\D} + \frac{(\A)\precision\one - (\B)\precision r}{\D} \\
+            \frac{\partial x^*}{\partial\mu}
+            &= \frac{\C}{\D}\precision r - \frac{\B}{\D}\precision\one.
+        \end{aligned}
+    \end{equation*}
+\end{proof}
+\begin{remark}
+    Theorem \ref{thm:MarkowitzSensitivity} implies that the sensitivity with respect to $\mu$ of the Markowitz model (\ref{problem:Markowitz}) depends only on the covariance matrix $\Sigma^{-1}$ and the expected return $r$. The sensitivity $\mathcal{S}(\mu)=\mathrm{const.}$ remains constant.
+\end{remark}
+\begin{remark}
+    Figure \ref{fig:plotSensitivityElasticityMarkowitz} shows that the sensitivity with respect to $\mu$ of the Markowitz model (\ref{problem:Markowitz}) remains constant. However, the elasticity increases to its maximum $\max_{\mu\geq0}\mathcal{E}(\mu)\approx 1.5$ at $\mu\approx25\,\%$ and shrinks to its limit $\mathcal{E}(\mu)\to1$ for $\mu\to\infty$. Hence, the Markowitz model is elastic.
+\end{remark}
+\newpage
+\begin{figure}[h]
+  \centering
+  \includesvg[width=0.55\linewidth]{assets/plotSensitivityElasticityMarkowitz}
+  \caption{Sensitivity and Elasticity of the Markowitz model (\ref{problem:Markowitz}) for varying minimum return $\mu$}
+  \label{fig:plotSensitivityElasticityMarkowitz}
+\end{figure}
+\begin{remark} \label{remark:meanVariancePlotMarkowitz}
+    Figure \ref{fig:plotMeanVarianceMarkowitz} shows the mean-variance plot of the efficient Markowitz portfolio for stock prices $S$ from \cite[p.~18]{PichlerPortfoliooptimierung} and further efficient Markowitz portfolios for stock prices added with normally distributed noise $S^\varepsilon = N\sim\mathcal{N}(S,S^2\varepsilon^2)$. All efficient Markowitz portfolios are determined by (\ref{eq:markowitz-solution}). The Markowitz model (\ref{problem:Markowitz}) is sensitive to the price of the stock $S$.
+\end{remark}
+\begin{figure}[h]
+\centering
+    \begin{subfigure}{0.5\linewidth}
+    \includesvg[width=\linewidth]{assets/plotMeanVarianceMarkowitz05}
+    \caption{$\varepsilon = 0.5\,\%$}
+    \end{subfigure}\hfill
+    \begin{subfigure}{0.5\linewidth}
+    \includesvg[width=\linewidth]{assets/plotMeanVarianceMarkowitz10}
+    \caption{$\varepsilon = 1.5\,\%$}
+    \end{subfigure}
+
+    \begin{subfigure}{0.5\linewidth}
+    \includesvg[width=\linewidth]{assets/plotMeanVarianceMarkowitz15}
+    \caption{$\varepsilon = 1.5\,\%$}
+    \end{subfigure}\hfill
+    \begin{subfigure}{0.5\linewidth}
+    \includesvg[width=\linewidth]{assets/plotMeanVarianceMarkowitz20}
+    \caption{$\varepsilon = 2.0\,\%$}
+    \end{subfigure}
+\caption{The mean-variance plot of (\ref{problem:Markowitz})}
+\label{fig:plotMeanVarianceMarkowitz}
+\end{figure}
+\newpage
+\subsection{Utility Maximization}
+\begin{theorem}
+\label{thm:UtilityMaximizationSensitivity}
+    The sensitivity of (\ref{eq:utility-maximization}) with respect to $\kappa$ is given by
+    \begin{equation*}
+        \mathcal{S}(\kappa) = -\frac{1}{\kappa^2}\precision r + \frac{1}{\kappa^2}\frac{\B}{\C}\precision\one.
+    \end{equation*}
+\end{theorem}
+\begin{proof}
+    We reformulate the solution (\ref{eq:utility-maximization}) and take the derivative with respect to $\kappa$
+    \begin{equation*}
+        \begin{aligned}
+            x^*(\kappa) 
+            &= \frac{1}{\kappa}\precision\left(r+\frac{\kappa-\B}{\C}\one\right)
+            = \frac{1}{\kappa}\precision r + \frac{1}{\C}\precision\one - \frac{1}{\kappa}\frac{\B}{\C}\precision \one \\
+            \frac{\partial x^*}{\partial\kappa}
+            &= -\frac{1}{\kappa^2}\precision r + \frac{1}{\kappa^2}\frac{\B}{\C}\precision\one.
+        \end{aligned}
+    \end{equation*}
+\end{proof}
+\begin{remark}
+     The sensitivity with respect to $\kappa$ of the model (\ref{problem:UtilityMaximization}) depends on the covariance matrix $\Sigma^{-1}$, the expected return $r$ and the risk aversion $\kappa$ by Theorem \ref{thm:UtilityMaximizationSensitivity}. But the influence of a potentially badly behaved covariance matrix or expected return $r$ shrinks quadratically as $\kappa\to\infty$. Choosing $\kappa\gg0$ sufficiently large, ensure a low-sensitivity model.
+\end{remark}
+\begin{remark}
+    Figure \ref{fig:plotSensitivityElasticityUtilityMaximization} shows the sensitivity and elasticity of the model (\ref{problem:UtilityMaximization}) with respect to $\kappa$. We see $\lim_{\kappa\to\infty}\mathcal{S}(\kappa)=\lim_{\kappa\to\infty}\mathcal{E}(\kappa)=0$ with $\mathcal{S}\in\mathcal{O}(\frac{1}{\kappa^2})$ and $\mathcal{E}\in\mathcal{O}(\frac{1}{\kappa})$. This means that the model (\ref{problem:UtilityMaximization}) is not sensitive and completely inelastic with respect to $\kappa$ for sufficiently large $\kappa\gg0$.
+\end{remark}
+\begin{figure}[h]
+  \includesvg[width=\linewidth]{assets/plotSensitivityElasticityUtilityMaximization}
+  \caption{Sensitivity and Elasticity of the Utility Maximization (\ref{problem:UtilityMaximization}) for varying risk aversion $\kappa$}
+  \label{fig:plotSensitivityElasticityUtilityMaximization}
+\end{figure}
+\newpage
+\begin{remark}
+    On the one hand, Figure \ref{fig:plotMeanVarianceUtilityMaximization} shows the efficient frontier according to the Markowitz model. On the other hand, we see the mean-variance plot of portfolios determined by (\ref{eq:utility-maximization}) with noised stock data, cf. Remark \ref{remark:meanVariancePlotMarkowitz}. We have chosen $\kappa=1,\ldots,1\,000$. The Utility Maximization model (\ref{problem:UtilityMaximization}) is also sensitive to the price of the stock $S$, but allocations for sufficiently large $\kappa\gg0$ are less risky than allocations from the Markowitz model.
+\end{remark}
+\begin{figure}[h]
+\centering
+    \begin{subfigure}{0.5\linewidth}
+    \includesvg[width=\linewidth]{assets/plotMeanVarianceUtilityMaximization05}
+    \caption{$\varepsilon = 0.5\,\%$}
+    \end{subfigure}\hfill
+    \begin{subfigure}{0.5\linewidth}
+    \includesvg[width=\linewidth]{assets/plotMeanVarianceUtilityMaximization10}
+    \caption{$\varepsilon = 1.5\,\%$}
+    \end{subfigure}
+
+    \begin{subfigure}{0.5\linewidth}
+    \includesvg[width=\linewidth]{assets/plotMeanVarianceUtilityMaximization15}
+    \caption{$\varepsilon = 1.5\,\%$}
+    \end{subfigure}\hfill
+    \begin{subfigure}{0.5\linewidth}
+    \includesvg[width=\linewidth]{assets/plotMeanVarianceUtilityMaximization20}
+    \caption{$\varepsilon = 2.0\,\%$}
+    \end{subfigure}
+\caption{The mean-variance plot of (\ref{problem:UtilityMaximization})}
+\label{fig:plotMeanVarianceUtilityMaximization}
+\end{figure}
+\subsection{Linear Programming}
+\begin{theorem}
+    The model (\ref{problem:LinearProgram}) is not sensitive with respect to $\gamma\in(0,1)$ at all, i.e. $\mathcal{S}(\gamma)=0$.
+\end{theorem}
+\begin{proof}
+ Differentiating the objective function $c^\top x^\prime$ of (\ref{problem:LinearProgrammFullMatrix}) with respect to $x^\prime$ gives
+    \begin{equation*}
+        0 \overset{!}{=} \frac{\partial}{\partial x^\prime}c^\top x^\prime = c^\top =
+        \begin{pmatrix}
+            \gamma r^\top & \gamma q & \gamma\frac{1}{1-\alpha}p^\top
+        \end{pmatrix} = \gamma
+        \begin{pmatrix}
+            r^\top & q & \frac{1}{1-\alpha}p^\top
+        \end{pmatrix}.
+    \end{equation*}
+ Which means that the optimal solution of (\ref{problem:LinearProgram}) is independent of $\gamma$ and $\mathcal{S}(\gamma)=0$.
+\end{proof}
+\begin{corollary}
+    The elasticity with respect to $\gamma\in(0,1)$ of the model (\ref{problem:LinearProgram}) is also $\mathcal{E}(\gamma) = 0$.
+\end{corollary}
+\begin{proof}
+    Since $\mathcal{S}(\gamma)=0$ we have $\mathcal{E}(\gamma)=\frac{\gamma}{x^*}\mathcal{S}(\gamma) = 0$.
+\end{proof}
+\begin{remark}
+    Figure \ref{fig:plotSensitivityElasticityLinearProgramming} shows that the sensitivity with respect to $\mu$ of the model (\ref{problem:LinearProgram}) remains constant. However, the elasticity increases to its maximum $\max_{\mu\geq0}\mathcal{E}(\mu)\approx 1.25$ at $\mu\approx25\,\%$ and shrinks to its limit $\mathcal{E}(\mu)\to1$ for $\mu\to\infty$. Hence, the linear program is elastic with respect to $\mu$.
+\end{remark}
+\newpage
+\begin{figure}[h]
+  \centering
+  \includesvg[width=0.6\textwidth]{assets/plotSensitivityElasticityLinearProgramming}
+  \caption{Sensitivity and Elasticity of model (\ref{problem:LinearProgram}) for varying minimum return $\mu$, cf. Figure \ref{fig:plotSensitivityElasticityMarkowitz}}
+  \label{fig:plotSensitivityElasticityLinearProgramming}
+\end{figure}
+\begin{remark}
+    The objective or risk measure of the model (\ref{problem:LinearProgram}) is $\rho(x)=\E x^\top\xi+\mathcal{R}_{\alpha,\gamma}(-x^\top\xi)$. Figure \ref{fig:plotMeanRiskMeasureLinearProgramming} shows the mean-risk plot for stock prices $S$ from \cite[p.~18]{PichlerPortfoliooptimierung} and further portfolios for stock prices added with normally distributed noise $S^\varepsilon = N\sim\mathcal{N}(S,S^2\varepsilon^2)$. We have chosen the quantile $\alpha = 95\,\%$ and the weight $\gamma = 50\,\%$. Compared to models (\ref{problem:Markowitz}) and (\ref{problem:UtilityMaximization}) we have a linearly increasing efficient frontier, cf. Figures \ref{fig:plotMeanVarianceMarkowitz}, \ref{fig:plotMeanVarianceUtilityMaximization}. The linear programming model is quite sensitive to the price of the stock $S$.
+\end{remark}
+\begin{figure}[h]
+\centering
+    \begin{subfigure}{0.5\linewidth}
+    \includesvg[width=\linewidth]{assets/plotMeanRiskMeasureLinearProgramming05}
+    \caption{$\varepsilon = 0.5\,\%$}
+    \end{subfigure}\hfill
+    \begin{subfigure}{0.5\linewidth}
+    \includesvg[width=\linewidth]{assets/plotMeanRiskMeasureLinearProgramming10}
+    \caption{$\varepsilon = 1.5\,\%$}
+    \end{subfigure}
+
+    \begin{subfigure}{0.5\linewidth}
+    \includesvg[width=\linewidth]{assets/plotMeanRiskMeasureLinearProgramming15}
+    \caption{$\varepsilon = 1.5\,\%$}
+    \end{subfigure}\hfill
+    \begin{subfigure}{0.5\linewidth}
+    \includesvg[width=\linewidth]{assets/plotMeanRiskMeasureLinearProgramming20}
+    \caption{$\varepsilon = 2.0\,\%$}
+    \end{subfigure}
+\caption{The mean-risk plot of (\ref{problem:LinearProgram})}
+\label{fig:plotMeanRiskMeasureLinearProgramming}
+\end{figure}
+\newpage
+
+\section{Conclusions}
+
+This elaboration provides a mathematical formulation of risk, numerical approaches for asset allocation models, and an analysis of parameter sensitivity. Therefore, we introduce risk measures for an investor's risk preference and derive numerical solutions for each measure:
+
+\medskip The classical Markowitz model, which minimizes the variance; an utility maximization model; and a linear program, based on minimizing the Average Value at risk. Each of them has strengths and weaknesses that are revealed in the sensitivity analysis. The results show that the efficient Markowitz portfolio is highly sensitive to small changes in the covariance matrix and expected return. In contrast, the utility maximization approach produces a stable allocation for sufficiently large risk aversion. The linear program provides a risk perspective that minimizes extreme losses.
+
+\medskip At the same time, the sensitivity analysis highlights important limitations of these three portfolio optimization models: Unfortunately, all of these methods are based on historical data. The results we have received are optimal in the past. Even if we assume that stocks will behave similarly in the future, small changes in the stock prices cause big differences in the outcomes. In the last section, we confirm and quantify this phenomenon with sensitivity measures.
+
+\medskip Nevertheless, an investment strategy shall be measured alongside these three methods and should not be surpassed. Future work may improve these models, e.g. we can hedge against the uncertainties or leverage the expected return.
 
 \bibliographystyle{abbrvnat}
 \label{References}
